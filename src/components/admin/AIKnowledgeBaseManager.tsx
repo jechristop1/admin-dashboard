@@ -48,6 +48,13 @@ interface UploadProgress {
   status: string;
 }
 
+interface ErrorLog {
+  timestamp: string;
+  operation: string;
+  error: string;
+  details?: any;
+}
+
 const AIKnowledgeBaseManager: React.FC = () => {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +65,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({
     isUploading: false,
     progress: 0,
@@ -92,6 +100,23 @@ const AIKnowledgeBaseManager: React.FC = () => {
     'Other'
   ]);
 
+  // Enhanced logging function
+  const logError = (operation: string, error: any, details?: any) => {
+    const errorLog: ErrorLog = {
+      timestamp: new Date().toISOString(),
+      operation,
+      error: error.message || String(error),
+      details
+    };
+    
+    console.error(`[AIKnowledgeBaseManager] ${operation}:`, error, details);
+    setErrorLogs(prev => [errorLog, ...prev.slice(0, 9)]); // Keep last 10 errors
+  };
+
+  const logInfo = (operation: string, message: string, details?: any) => {
+    console.log(`[AIKnowledgeBaseManager] ${operation}: ${message}`, details);
+  };
+
   useEffect(() => {
     loadDocuments();
   }, []);
@@ -109,6 +134,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      logInfo('loadDocuments', 'Starting to load knowledge base documents');
 
       const { data, error: fetchError } = await supabase
         .from('documents')
@@ -116,14 +142,18 @@ const AIKnowledgeBaseManager: React.FC = () => {
         .is('user_id', null) // Only global knowledge base documents
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        logError('loadDocuments', fetchError, { query: 'documents table, user_id is null' });
+        throw fetchError;
+      }
 
+      logInfo('loadDocuments', `Successfully loaded ${data?.length || 0} documents`);
       setDocuments(data || []);
       
       // Dispatch event to update sidebar stats
       window.dispatchEvent(new CustomEvent('documentUploaded'));
     } catch (error: any) {
-      console.error('Error loading knowledge base documents:', error);
+      logError('loadDocuments', error);
       setError(`Failed to load documents: ${error.message}`);
     } finally {
       setLoading(false);
@@ -132,24 +162,33 @@ const AIKnowledgeBaseManager: React.FC = () => {
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
+      logInfo('extractTextFromPDF', `Starting PDF text extraction for file: ${file.name}`, {
+        fileSize: file.size,
+        fileType: file.type
+      });
+
       const arrayBuffer = await file.arrayBuffer();
       
       // Validate PDF header
       const header = new Uint8Array(arrayBuffer.slice(0, 4));
       const pdfHeader = String.fromCharCode(...header);
       if (!pdfHeader.startsWith('%PDF')) {
-        throw new Error('Invalid PDF file format');
+        throw new Error('Invalid PDF file format - missing PDF header');
       }
 
       // Load PDF document
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const numPages = pdf.numPages;
       
+      logInfo('extractTextFromPDF', `PDF loaded successfully with ${numPages} pages`);
+      
       if (numPages < 1) {
         throw new Error('PDF has no pages');
       }
 
       let fullText = '';
+      let successfulPages = 0;
+      let failedPages = 0;
       
       // Extract text from each page
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
@@ -164,20 +203,32 @@ const AIKnowledgeBaseManager: React.FC = () => {
           
           if (pageText) {
             fullText += pageText + '\n\n';
+            successfulPages++;
           }
         } catch (pageError) {
-          console.error(`Error extracting text from page ${pageNum}:`, pageError);
+          failedPages++;
+          logError('extractTextFromPDF', pageError, { 
+            pageNumber: pageNum, 
+            fileName: file.name 
+          });
           // Continue with other pages even if one fails
         }
       }
 
+      logInfo('extractTextFromPDF', `Text extraction completed`, {
+        totalPages: numPages,
+        successfulPages,
+        failedPages,
+        extractedTextLength: fullText.length
+      });
+
       if (!fullText.trim()) {
-        throw new Error('No readable text found in PDF. The file might be scanned or image-based.');
+        throw new Error('No readable text found in PDF. The file might be scanned, image-based, or encrypted.');
       }
 
       return fullText.trim();
     } catch (error: any) {
-      console.error('PDF extraction error:', error);
+      logError('extractTextFromPDF', error, { fileName: file.name, fileSize: file.size });
       throw new Error(`Failed to extract text from PDF: ${error.message}`);
     }
   };
@@ -186,17 +237,34 @@ const AIKnowledgeBaseManager: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    logInfo('handleFileSelect', `File selected: ${file.name}`, {
+      fileSize: file.size,
+      fileType: file.type
+    });
+
     // Validate file type
     const allowedTypes = ['application/pdf', 'text/plain', 'application/json'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Please upload PDF, TXT, or JSON files only.');
+      const errorMsg = `Invalid file type: ${file.type}. Please upload PDF, TXT, or JSON files only.`;
+      logError('handleFileSelect', new Error(errorMsg), { 
+        fileName: file.name, 
+        fileType: file.type,
+        allowedTypes 
+      });
+      setError(errorMsg);
       return;
     }
 
     // Validate file size (10MB limit)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError('File size must be less than 10MB.');
+      const errorMsg = `File size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds 10MB limit.`;
+      logError('handleFileSelect', new Error(errorMsg), { 
+        fileName: file.name, 
+        fileSize: file.size,
+        maxSize 
+      });
+      setError(errorMsg);
       return;
     }
 
@@ -206,6 +274,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
       title: prev.title || file.name.replace(/\.[^/.]+$/, '')
     }));
     setError(null);
+    logInfo('handleFileSelect', 'File validation passed and form updated');
   };
 
   const addTag = () => {
@@ -216,6 +285,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
         tags: [...prev.tags, newTag],
         newTag: ''
       }));
+      logInfo('addTag', `Tag added: ${newTag}`);
     }
   };
 
@@ -224,13 +294,26 @@ const AIKnowledgeBaseManager: React.FC = () => {
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
+    logInfo('removeTag', `Tag removed: ${tagToRemove}`);
   };
 
   const handleUpload = async () => {
     if (!uploadForm.file || !uploadForm.title.trim()) {
-      setError('Please provide a file and title.');
+      const errorMsg = 'Please provide a file and title.';
+      logError('handleUpload', new Error(errorMsg), { 
+        hasFile: !!uploadForm.file, 
+        hasTitle: !!uploadForm.title.trim() 
+      });
+      setError(errorMsg);
       return;
     }
+
+    logInfo('handleUpload', 'Starting document upload process', {
+      fileName: uploadForm.file.name,
+      title: uploadForm.title,
+      tags: uploadForm.tags,
+      category: uploadForm.category
+    });
 
     setUploadProgress({
       isUploading: true,
@@ -250,12 +333,18 @@ const AIKnowledgeBaseManager: React.FC = () => {
         content = await extractTextFromPDF(uploadForm.file);
       } else {
         // Read text files directly
+        logInfo('handleUpload', 'Reading text file content');
         content = await uploadForm.file.text();
       }
 
       if (!content.trim()) {
         throw new Error('File appears to be empty or unreadable.');
       }
+
+      logInfo('handleUpload', 'Content extracted successfully', {
+        contentLength: content.length,
+        wordCount: content.split(/\s+/).length
+      });
 
       // Prepare document metadata
       const metadata = {
@@ -269,6 +358,8 @@ const AIKnowledgeBaseManager: React.FC = () => {
       };
 
       setUploadProgress(prev => ({ ...prev, progress: 50, status: 'Uploading to knowledge base...' }));
+
+      logInfo('handleUpload', 'Calling train function', { metadata });
 
       // Upload to knowledge base using the train function
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/train`, {
@@ -289,8 +380,16 @@ const AIKnowledgeBaseManager: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        logError('handleUpload', new Error(`Train function failed: ${response.status}`), {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
         throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
       }
+
+      const responseData = await response.json();
+      logInfo('handleUpload', 'Train function completed successfully', responseData);
 
       setUploadProgress(prev => ({ ...prev, progress: 100, status: 'Upload complete!' }));
 
@@ -308,8 +407,14 @@ const AIKnowledgeBaseManager: React.FC = () => {
       // Reload documents
       await loadDocuments();
 
+      logInfo('handleUpload', 'Upload process completed successfully');
+
     } catch (error: any) {
-      console.error('Upload error:', error);
+      logError('handleUpload', error, {
+        fileName: uploadForm.file?.name,
+        title: uploadForm.title,
+        stage: uploadProgress.status
+      });
       setError(`Upload failed: ${error.message}`);
     } finally {
       setUploadProgress({
@@ -321,22 +426,42 @@ const AIKnowledgeBaseManager: React.FC = () => {
   };
 
   const handleDelete = async (documentId: string) => {
+    // Enhanced validation and logging
+    logInfo('handleDelete', `Delete operation initiated`, { documentId });
+
     // Validate document ID
     if (!documentId || documentId === 'null' || documentId === 'undefined') {
-      console.error('Invalid document ID provided for deletion:', documentId);
+      const errorMsg = 'Invalid document ID provided for deletion';
+      logError('handleDelete', new Error(errorMsg), { 
+        providedId: documentId,
+        type: typeof documentId 
+      });
       setError('Invalid document ID. Cannot delete document.');
       return;
     }
 
-    // Find the document to ensure it exists
+    // Find the document to ensure it exists in local state
     const documentToDelete = documents.find(doc => doc.id === documentId);
     if (!documentToDelete) {
-      console.error('Document not found in local state:', documentId);
-      setError('Document not found. Please refresh and try again.');
+      logError('handleDelete', new Error('Document not found in local state'), { 
+        documentId,
+        availableDocuments: documents.map(d => ({ id: d.id, title: d.title }))
+      });
+      
+      // Remove from UI anyway since it doesn't exist
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      logInfo('handleDelete', 'Removed non-existent document from UI');
       return;
     }
 
+    logInfo('handleDelete', `Found document to delete`, {
+      id: documentToDelete.id,
+      title: documentToDelete.title,
+      user_id: documentToDelete.user_id
+    });
+
     if (!confirm(`Are you sure you want to delete "${documentToDelete.title}"? This action cannot be undone.`)) {
+      logInfo('handleDelete', 'Delete operation cancelled by user');
       return;
     }
 
@@ -345,11 +470,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
     setError(null);
 
     try {
-      console.log('Attempting to delete document:', {
-        id: documentId,
-        title: documentToDelete.title,
-        user_id: documentToDelete.user_id
-      });
+      logInfo('handleDelete', 'Starting database delete operation', { documentId });
 
       // Delete the document from the knowledge base
       // Only delete documents where user_id is null (global knowledge base)
@@ -360,37 +481,59 @@ const AIKnowledgeBaseManager: React.FC = () => {
         .is('user_id', null);
 
       if (deleteError) {
-        console.error('Supabase delete error:', deleteError);
+        logError('handleDelete', deleteError, { 
+          documentId,
+          operation: 'supabase delete',
+          table: 'documents'
+        });
         throw new Error(`Database error: ${deleteError.message}`);
       }
 
-      console.log('Delete operation completed. Rows affected:', count);
+      logInfo('handleDelete', 'Database delete operation completed', { 
+        documentId,
+        rowsAffected: count 
+      });
 
-      // Remove the document from local state regardless of whether it was found in the database
-      // This ensures the UI reflects the user's intent to remove the item
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      // Always remove from local state to ensure UI consistency
+      // This handles cases where the document might not exist in DB but exists in UI
+      setDocuments(prev => {
+        const newDocs = prev.filter(doc => doc.id !== documentId);
+        logInfo('handleDelete', `Removed document from local state`, {
+          originalCount: prev.length,
+          newCount: newDocs.length,
+          removedId: documentId
+        });
+        return newDocs;
+      });
 
       // Close view modal if this document was being viewed
       if (selectedDocument?.id === documentId) {
         setSelectedDocument(null);
         setShowViewModal(false);
+        logInfo('handleDelete', 'Closed view modal for deleted document');
       }
 
       // Dispatch event to update sidebar stats
       window.dispatchEvent(new CustomEvent('documentUploaded'));
 
-      console.log('Document removed from UI successfully');
+      logInfo('handleDelete', 'Delete operation completed successfully');
 
-      // Also reload documents to ensure consistency
+      // Reload documents to ensure consistency (with delay to avoid race conditions)
       setTimeout(() => {
+        logInfo('handleDelete', 'Reloading documents for consistency check');
         loadDocuments();
       }, 500);
 
     } catch (error: any) {
-      console.error('Delete operation failed:', error);
+      logError('handleDelete', error, { 
+        documentId,
+        documentTitle: documentToDelete.title,
+        operation: 'complete delete process'
+      });
       setError(`Failed to delete document: ${error.message}`);
       
       // Reload documents to ensure UI is in sync with database
+      logInfo('handleDelete', 'Reloading documents after error');
       loadDocuments();
     } finally {
       // Remove from deleting set
@@ -399,10 +542,13 @@ const AIKnowledgeBaseManager: React.FC = () => {
         newSet.delete(documentId);
         return newSet;
       });
+      logInfo('handleDelete', 'Removed document from deleting set');
     }
   };
 
   const handleReplace = async (documentId: string) => {
+    logInfo('handleReplace', 'Replace operation initiated', { documentId });
+    
     // Set up the upload form with the existing document's data
     const doc = documents.find(d => d.id === documentId);
     if (doc) {
@@ -414,11 +560,19 @@ const AIKnowledgeBaseManager: React.FC = () => {
         source: doc.metadata.source || ''
       }));
       
+      logInfo('handleReplace', 'Upload form populated with existing document data', {
+        title: doc.title,
+        tags: doc.metadata.tags
+      });
+      
       // Delete the old document first
       await handleDelete(documentId);
       
       // Open upload modal for replacement
       setShowUploadModal(true);
+      logInfo('handleReplace', 'Upload modal opened for replacement');
+    } else {
+      logError('handleReplace', new Error('Document not found for replacement'), { documentId });
     }
   };
 
@@ -555,7 +709,26 @@ const AIKnowledgeBaseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Table - Removed Content Preview column */}
+      {/* Error Logs (Development/Debug) */}
+      {errorLogs.length > 0 && process.env.NODE_ENV === 'development' && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex-shrink-0">
+          <details>
+            <summary className="text-sm font-medium text-yellow-800 cursor-pointer">
+              Recent Error Logs ({errorLogs.length})
+            </summary>
+            <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+              {errorLogs.slice(0, 3).map((log, index) => (
+                <div key={index} className="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">
+                  <div className="font-medium">{log.operation}: {log.error}</div>
+                  <div className="text-yellow-600">{new Date(log.timestamp).toLocaleTimeString()}</div>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
+
+      {/* Documents Table */}
       <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
         <div className="overflow-auto" style={{ height: '500px' }}>
           <table className="min-w-full divide-y divide-gray-200">
