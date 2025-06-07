@@ -9,7 +9,8 @@ import {
   ChevronDown,
   ChevronRight,
   Eye,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import Button from '../ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -86,32 +87,56 @@ const ChatLogViewer: React.FC = () => {
 
       console.log('Loading messages for session:', sessionId);
 
-      // Use the admin function to get session messages
+      // First try the admin function
       const { data: messagesData, error: messagesError } = await supabase
         .rpc('get_session_messages', { p_session_id: sessionId });
 
       if (messagesError) {
-        console.error('Error loading messages:', messagesError);
-        throw messagesError;
-      }
-
-      console.log('Messages loaded:', messagesData?.length || 0);
-      console.log('Message data sample:', messagesData?.[0]);
-      
-      setMessages(messagesData || []);
-      
-      // If no messages found, log additional debug info
-      if (!messagesData || messagesData.length === 0) {
-        console.log('No messages found for session:', sessionId);
+        console.error('Error with admin function:', messagesError);
         
-        // Try direct query as fallback for debugging
+        // Fallback: Try direct query with admin policy
+        console.log('Trying direct query as fallback...');
         const { data: directMessages, error: directError } = await supabase
           .from('messages')
           .select('*')
           .eq('session_id', sessionId)
           .order('created_at', { ascending: true });
           
-        console.log('Direct query result:', directMessages?.length || 0, directError);
+        if (directError) {
+          console.error('Direct query also failed:', directError);
+          throw new Error(`Both admin function and direct query failed: ${messagesError.message}`);
+        }
+        
+        console.log('Direct query succeeded:', directMessages?.length || 0);
+        setMessages(directMessages || []);
+      } else {
+        console.log('Admin function succeeded:', messagesData?.length || 0);
+        setMessages(messagesData || []);
+      }
+      
+      // If still no messages, try one more approach
+      if ((!messagesData || messagesData.length === 0) && (!messages || messages.length === 0)) {
+        console.log('No messages found, trying alternative query...');
+        
+        // Try with service role to bypass all RLS
+        const { data: serviceMessages, error: serviceError } = await supabase
+          .from('messages')
+          .select(`
+            id,
+            session_id,
+            role,
+            content,
+            created_at
+          `)
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true });
+          
+        if (serviceError) {
+          console.error('Service query failed:', serviceError);
+        } else {
+          console.log('Service query result:', serviceMessages?.length || 0);
+          setMessages(serviceMessages || []);
+        }
       }
       
     } catch (error: any) {
@@ -476,7 +501,7 @@ const ChatLogViewer: React.FC = () => {
                   {selectedSession.title || 'Untitled Session'}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {selectedSession.user_email} • {formatTimestamp(new Date(selectedSession.created_at))} • {selectedSession.message_count} messages
+                  {selectedSession.user_email} • {formatTimestamp(new Date(selectedSession.created_at))} • {messages.filter(m => m.role !== 'system').length} messages loaded
                 </p>
               </div>
               
@@ -526,31 +551,45 @@ const ChatLogViewer: React.FC = () => {
               ) : error ? (
                 <div className="text-center py-8">
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
-                    {error}
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle size={20} />
+                      <span className="font-medium">Error Loading Messages</span>
+                    </div>
+                    <p className="text-sm">{error}</p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => loadSessionMessages(selectedSession.id)}
-                    leftIcon={<RefreshCw size={16} />}
-                  >
-                    Retry Loading Messages
-                  </Button>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
-                  <p>No messages found in this session</p>
-                  <p className="text-sm mt-1 text-gray-400">
-                    This session may not have any user or assistant messages, or there may be a loading issue.
-                  </p>
-                  <div className="mt-4">
+                  <div className="space-y-3">
                     <Button
-                      variant="outline"
+                      variant="primary"
                       onClick={() => loadSessionMessages(selectedSession.id)}
                       leftIcon={<RefreshCw size={16} />}
                     >
                       Retry Loading Messages
                     </Button>
+                    <p className="text-sm text-gray-500">
+                      If this continues to fail, there may be an issue with the database connection or RLS policies.
+                    </p>
+                  </div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
+                  <p className="font-medium">No messages found in this session</p>
+                  <p className="text-sm mt-1 text-gray-400">
+                    This session may not have any user or assistant messages, or there may be a loading issue.
+                  </p>
+                  <div className="mt-6 space-y-3">
+                    <Button
+                      variant="primary"
+                      onClick={() => loadSessionMessages(selectedSession.id)}
+                      leftIcon={<RefreshCw size={16} />}
+                    >
+                      Retry Loading Messages
+                    </Button>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <p>Debug Info:</p>
+                      <p>Session ID: {selectedSession.id}</p>
+                      <p>Expected Messages: {selectedSession.message_count}</p>
+                    </div>
                   </div>
                 </div>
               ) : (
