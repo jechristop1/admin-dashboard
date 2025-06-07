@@ -335,7 +335,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
   });
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col">
       {/* Header */}
       <div className="mb-8 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -467,9 +467,9 @@ const AIKnowledgeBaseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden flex-1">
-        <div className="h-full overflow-y-auto">
+      {/* Documents Table - Fixed height with scrolling */}
+      <div className="bg-white rounded-lg shadow-sm border flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
