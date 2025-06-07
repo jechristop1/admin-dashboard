@@ -82,15 +82,13 @@ const ChatLogViewer: React.FC = () => {
     try {
       setMessagesLoading(true);
       setError(null);
+      setMessages([]); // Clear previous messages immediately
 
       console.log('Loading messages for session:', sessionId);
 
-      // Use service role key to bypass RLS for admin access
+      // Use the admin function to get session messages
       const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
+        .rpc('get_session_messages', { p_session_id: sessionId });
 
       if (messagesError) {
         console.error('Error loading messages:', messagesError);
@@ -98,19 +96,41 @@ const ChatLogViewer: React.FC = () => {
       }
 
       console.log('Messages loaded:', messagesData?.length || 0);
+      console.log('Message data sample:', messagesData?.[0]);
+      
       setMessages(messagesData || []);
+      
+      // If no messages found, log additional debug info
+      if (!messagesData || messagesData.length === 0) {
+        console.log('No messages found for session:', sessionId);
+        
+        // Try direct query as fallback for debugging
+        const { data: directMessages, error: directError } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true });
+          
+        console.log('Direct query result:', directMessages?.length || 0, directError);
+      }
+      
     } catch (error: any) {
       console.error('Error loading messages:', error);
       setError(`Failed to load messages: ${error.message}`);
+      setMessages([]); // Ensure messages are cleared on error
     } finally {
       setMessagesLoading(false);
     }
   };
 
   const handleSessionClick = async (session: ChatSession) => {
+    console.log('Session clicked:', session.id, session.title);
     setSelectedSession(session);
     setShowSessionModal(true);
-    setMessages([]); // Clear previous messages
+    setMessages([]); // Clear previous messages immediately
+    setError(null); // Clear any previous errors
+    
+    // Load messages automatically
     await loadSessionMessages(session.id);
   };
 
@@ -456,7 +476,7 @@ const ChatLogViewer: React.FC = () => {
                   {selectedSession.title || 'Untitled Session'}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {selectedSession.user_email} • {formatTimestamp(new Date(selectedSession.created_at))}
+                  {selectedSession.user_email} • {formatTimestamp(new Date(selectedSession.created_at))} • {selectedSession.message_count} messages
                 </p>
               </div>
               
@@ -486,6 +506,7 @@ const ChatLogViewer: React.FC = () => {
                     setShowSessionModal(false);
                     setSelectedSession(null);
                     setMessages([]);
+                    setError(null);
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -502,6 +523,19 @@ const ChatLogViewer: React.FC = () => {
                   <RefreshCw size={20} className="animate-spin mr-2" />
                   Loading messages...
                 </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+                    {error}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => loadSessionMessages(selectedSession.id)}
+                    leftIcon={<RefreshCw size={16} />}
+                  >
+                    Retry Loading Messages
+                  </Button>
+                </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
@@ -509,6 +543,15 @@ const ChatLogViewer: React.FC = () => {
                   <p className="text-sm mt-1 text-gray-400">
                     This session may not have any user or assistant messages, or there may be a loading issue.
                   </p>
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => loadSessionMessages(selectedSession.id)}
+                      leftIcon={<RefreshCw size={16} />}
+                    >
+                      Retry Loading Messages
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
