@@ -435,7 +435,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Table - Increased height for more space */}
+      {/* Documents Table - Removed Content Preview column */}
       <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
         <div className="overflow-auto" style={{ height: '500px' }}>
           <table className="min-w-full divide-y divide-gray-200">
@@ -450,9 +450,6 @@ const AIKnowledgeBaseManager: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Upload Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Content Preview
-                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -461,7 +458,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw size={20} className="animate-spin" />
                       Loading knowledge base documents...
@@ -470,7 +467,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
                 </tr>
               ) : filteredDocuments.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     <Database size={24} className="mx-auto mb-2 text-gray-400" />
                     <p>No documents found</p>
                     {(searchTerm || selectedTags.length > 0) ? (
@@ -518,11 +515,6 @@ const AIKnowledgeBaseManager: React.FC = () => {
                       <div className="flex items-center text-sm text-gray-900">
                         <Calendar size={16} className="text-gray-400 mr-2" />
                         {formatDate(doc.created_at)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600 max-w-xs">
-                        {getContentPreview(doc.content)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
