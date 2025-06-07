@@ -259,7 +259,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <Layout>
       <div className="h-full flex flex-col overflow-hidden">
-        <div className="max-w-7xl mx-auto p-6 flex-1 flex flex-col overflow-hidden">
+        <div className="w-full px-4 lg:px-6 py-6 flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="mb-8 flex-shrink-0">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
@@ -308,8 +308,8 @@ const AdminDashboard: React.FC = () => {
             {activeTab === 'documents' ? (
               <div className="h-full flex flex-col overflow-hidden">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 flex-shrink-0">
-                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 flex-shrink-0">
+                  <div className="bg-white rounded-lg shadow-sm border p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Total Documents</p>
@@ -319,7 +319,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="bg-white rounded-lg shadow-sm border p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Analyzed</p>
@@ -331,7 +331,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="bg-white rounded-lg shadow-sm border p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Pending</p>
@@ -343,7 +343,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="bg-white rounded-lg shadow-sm border p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Errors</p>
@@ -357,9 +357,9 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Filters and Search */}
-                <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 flex-shrink-0">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1">
+                <div className="bg-white rounded-lg shadow-sm border p-4 mb-6 flex-shrink-0">
+                  <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex-1 min-w-0">
                       <div className="relative">
                         <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
@@ -372,11 +372,11 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-3">
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                       >
                         <option value="all">All Status</option>
                         <option value="pending">Pending</option>
@@ -388,7 +388,7 @@ const AdminDashboard: React.FC = () => {
                       <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                       >
                         <option value="all">All Types</option>
                         <option value="c&p_exam">C&P Exam</option>
@@ -399,6 +399,7 @@ const AdminDashboard: React.FC = () => {
                       
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={loadDocuments}
                         leftIcon={<RefreshCw size={16} />}
                         disabled={loading}
@@ -423,22 +424,22 @@ const AdminDashboard: React.FC = () => {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50 sticky top-0 z-10">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Document
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               User
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Type
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Upload Date
                             </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Actions
                             </th>
                           </tr>
@@ -466,11 +467,11 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             filteredDocuments.map((doc) => (
                               <tr key={doc.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
                                     <FileText size={20} className="text-gray-400 mr-3" />
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900">
+                                    <div className="min-w-0">
+                                      <div className="text-sm font-medium text-gray-900 truncate">
                                         {doc.file_name}
                                       </div>
                                       <div className="text-sm text-gray-500">
@@ -479,20 +480,20 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
                                     <User size={16} className="text-gray-400 mr-2" />
-                                    <div className="text-sm text-gray-900">
+                                    <div className="text-sm text-gray-900 truncate">
                                       {doc.user_email}
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     {getDocumentTypeLabel(doc.document_type)}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     {getStatusIcon(doc.status)}
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
@@ -500,13 +501,13 @@ const AdminDashboard: React.FC = () => {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-4 py-4 whitespace-nowrap">
                                   <div className="flex items-center text-sm text-gray-900">
                                     <Calendar size={16} className="text-gray-400 mr-2" />
                                     {formatDate(doc.upload_date)}
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                   <div className="flex items-center justify-end gap-2">
                                     <Button
                                       variant="ghost"
