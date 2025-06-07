@@ -29,7 +29,7 @@ interface AdminDocument {
   upload_date: string;
   url: string;
   user_id: string;
-  user_email?: string;
+  user_email: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -57,24 +57,19 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Get all documents with user information
+      console.log('Loading documents for admin dashboard...');
+
+      // Use the admin function to get all user documents
       const { data: docsData, error: docsError } = await supabase
-        .from('user_documents')
-        .select(`
-          *,
-          users(email)
-        `)
-        .order('upload_date', { ascending: false });
+        .rpc('get_all_user_documents');
 
-      if (docsError) throw docsError;
+      if (docsError) {
+        console.error('Error from get_all_user_documents:', docsError);
+        throw docsError;
+      }
 
-      // Transform the data to include user email
-      const documentsWithUserInfo = docsData?.map(doc => ({
-        ...doc,
-        user_email: doc.users?.email || 'Unknown'
-      })) || [];
-
-      setDocuments(documentsWithUserInfo);
+      console.log('Documents loaded:', docsData?.length || 0);
+      setDocuments(docsData || []);
     } catch (error: any) {
       console.error('Error loading documents:', error);
       setError(`Failed to load documents: ${error.message}`);
