@@ -321,13 +321,22 @@ const AIKnowledgeBaseManager: React.FC = () => {
   };
 
   const handleDelete = async (documentId: string) => {
-    if (!documentId) {
-      console.error('No document ID provided for deletion');
-      setError('Invalid document ID');
+    // Validate document ID
+    if (!documentId || documentId === 'null' || documentId === 'undefined') {
+      console.error('Invalid document ID provided for deletion:', documentId);
+      setError('Invalid document ID. Cannot delete document.');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+    // Find the document to ensure it exists
+    const documentToDelete = documents.find(doc => doc.id === documentId);
+    if (!documentToDelete) {
+      console.error('Document not found in local state:', documentId);
+      setError('Document not found. Please refresh and try again.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete "${documentToDelete.title}"? This action cannot be undone.`)) {
       return;
     }
 
@@ -336,19 +345,29 @@ const AIKnowledgeBaseManager: React.FC = () => {
     setError(null);
 
     try {
-      console.log('Attempting to delete document with ID:', documentId);
+      console.log('Attempting to delete document:', {
+        id: documentId,
+        title: documentToDelete.title,
+        user_id: documentToDelete.user_id
+      });
 
       // Delete the document from the knowledge base
-      // Use the correct filter for global knowledge base documents
-      const { error: deleteError } = await supabase
+      // Only delete documents where user_id is null (global knowledge base)
+      const { error: deleteError, count } = await supabase
         .from('documents')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', documentId)
-        .is('user_id', null); // Ensure we only delete global knowledge base documents
+        .is('user_id', null);
 
       if (deleteError) {
         console.error('Supabase delete error:', deleteError);
-        throw new Error(`Failed to delete document: ${deleteError.message}`);
+        throw new Error(`Database error: ${deleteError.message}`);
+      }
+
+      console.log('Delete operation completed. Rows affected:', count);
+
+      if (count === 0) {
+        throw new Error('No document was deleted. The document may not exist or may not be a global knowledge base document.');
       }
 
       console.log('Document deleted successfully');
@@ -362,12 +381,20 @@ const AIKnowledgeBaseManager: React.FC = () => {
       // Remove the document from local state immediately for better UX
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
 
+      // Dispatch event to update sidebar stats
+      window.dispatchEvent(new CustomEvent('documentUploaded'));
+
       // Also reload documents to ensure consistency
-      await loadDocuments();
+      setTimeout(() => {
+        loadDocuments();
+      }, 500);
 
     } catch (error: any) {
       console.error('Delete operation failed:', error);
       setError(`Failed to delete document: ${error.message}`);
+      
+      // Reload documents to ensure UI is in sync with database
+      loadDocuments();
     } finally {
       // Remove from deleting set
       setDeletingIds(prev => {
@@ -641,7 +668,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(doc.id)}
-                          disabled={deletingIds.has(doc.id)}
+                          disabled={deletingIds.has(doc.id) || !doc.id || doc.id === 'null'}
                           leftIcon={
                             deletingIds.has(doc.id) ? 
                             <RefreshCw size={16} className="animate-spin" /> : 
@@ -939,7 +966,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => handleDelete(selectedDocument.id)}
-                disabled={deletingIds.has(selectedDocument.id)}
+                disabled={deletingIds.has(selectedDocument.id) || !selectedDocument.id || selectedDocument.id === 'null'}
                 leftIcon={
                   deletingIds.has(selectedDocument.id) ? 
                   <RefreshCw size={16} className="animate-spin" /> : 
