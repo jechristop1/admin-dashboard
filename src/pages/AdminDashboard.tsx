@@ -414,137 +414,139 @@ const AdminDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Documents Table */}
+            {/* Documents Table - Made Scrollable */}
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Document
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Upload Date
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {loading ? (
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                          <div className="flex items-center justify-center gap-2">
-                            <RefreshCw size={20} className="animate-spin" />
-                            Loading documents...
-                          </div>
-                        </td>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Document
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          User
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Upload Date
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
-                    ) : filteredDocuments.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                          <FileText size={24} className="mx-auto mb-2 text-gray-400" />
-                          <p>No documents found</p>
-                          {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all') && (
-                            <p className="text-sm mt-1">Try adjusting your search or filters</p>
-                          )}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredDocuments.map((doc) => (
-                        <tr key={doc.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <FileText size={20} className="text-gray-400 mr-3" />
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {doc.file_name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {formatFileSize(doc.file_size)}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <User size={16} className="text-gray-400 mr-2" />
-                              <div className="text-sm text-gray-900">
-                                {doc.user_email}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {getDocumentTypeLabel(doc.document_type)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(doc.status)}
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
-                                {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center text-sm text-gray-900">
-                              <Calendar size={16} className="text-gray-400 mr-2" />
-                              {formatDate(doc.upload_date)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedDocument(doc)}
-                                leftIcon={<Eye size={16} />}
-                              >
-                                View
-                              </Button>
-                              
-                              {doc.status !== 'processing' && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => triggerAnalysis(doc.id)}
-                                  disabled={processingDocs.has(doc.id)}
-                                  leftIcon={
-                                    processingDocs.has(doc.id) ? 
-                                    <RefreshCw size={16} className="animate-spin" /> : 
-                                    <RefreshCw size={16} />
-                                  }
-                                >
-                                  {doc.status === 'completed' ? 'Re-analyze' : 'Analyze'}
-                                </Button>
-                              )}
-                              
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(doc.url, '_blank')}
-                                leftIcon={<Download size={16} />}
-                              >
-                                Download
-                              </Button>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {loading ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                            <div className="flex items-center justify-center gap-2">
+                              <RefreshCw size={20} className="animate-spin" />
+                              Loading documents...
                             </div>
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : filteredDocuments.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                            <FileText size={24} className="mx-auto mb-2 text-gray-400" />
+                            <p>No documents found</p>
+                            {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all') && (
+                              <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                            )}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredDocuments.map((doc) => (
+                          <tr key={doc.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <FileText size={20} className="text-gray-400 mr-3" />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {doc.file_name}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {formatFileSize(doc.file_size)}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <User size={16} className="text-gray-400 mr-2" />
+                                <div className="text-sm text-gray-900">
+                                  {doc.user_email}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {getDocumentTypeLabel(doc.document_type)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(doc.status)}
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
+                                  {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center text-sm text-gray-900">
+                                <Calendar size={16} className="text-gray-400 mr-2" />
+                                {formatDate(doc.upload_date)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSelectedDocument(doc)}
+                                  leftIcon={<Eye size={16} />}
+                                >
+                                  View
+                                </Button>
+                                
+                                {doc.status !== 'processing' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => triggerAnalysis(doc.id)}
+                                    disabled={processingDocs.has(doc.id)}
+                                    leftIcon={
+                                      processingDocs.has(doc.id) ? 
+                                      <RefreshCw size={16} className="animate-spin" /> : 
+                                      <RefreshCw size={16} />
+                                    }
+                                  >
+                                    {doc.status === 'completed' ? 'Re-analyze' : 'Analyze'}
+                                  </Button>
+                                )}
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(doc.url, '_blank')}
+                                  leftIcon={<Download size={16} />}
+                                >
+                                  Download
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
