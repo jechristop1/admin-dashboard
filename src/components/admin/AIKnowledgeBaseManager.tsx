@@ -57,6 +57,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<KnowledgeDocument | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({
     isUploading: false,
     progress: 0,
@@ -324,18 +325,46 @@ const AIKnowledgeBaseManager: React.FC = () => {
       return;
     }
 
+    // Add to deleting set to show loading state
+    setDeletingIds(prev => new Set(prev).add(documentId));
+    setError(null);
+
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete document:', documentId);
+
+      // Delete the document from the knowledge base
+      const { error: deleteError } = await supabase
         .from('documents')
         .delete()
-        .eq('id', documentId);
+        .eq('id', documentId)
+        .eq('user_id', null); // Ensure we only delete global knowledge base documents
 
-      if (error) throw error;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw new Error(`Failed to delete document: ${deleteError.message}`);
+      }
 
+      console.log('Document deleted successfully');
+
+      // Close view modal if this document was being viewed
+      if (selectedDocument?.id === documentId) {
+        setSelectedDocument(null);
+        setShowViewModal(false);
+      }
+
+      // Reload documents to reflect the change
       await loadDocuments();
+
     } catch (error: any) {
-      console.error('Delete error:', error);
+      console.error('Delete operation failed:', error);
       setError(`Failed to delete document: ${error.message}`);
+    } finally {
+      // Remove from deleting set
+      setDeletingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
+      });
     }
   };
 
@@ -593,6 +622,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
                           size="sm"
                           onClick={() => handleReplace(doc.id)}
                           leftIcon={<Edit3 size={16} />}
+                          disabled={deletingIds.has(doc.id)}
                         >
                           Replace
                         </Button>
@@ -601,10 +631,15 @@ const AIKnowledgeBaseManager: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(doc.id)}
-                          leftIcon={<Trash2 size={16} />}
+                          disabled={deletingIds.has(doc.id)}
+                          leftIcon={
+                            deletingIds.has(doc.id) ? 
+                            <RefreshCw size={16} className="animate-spin" /> : 
+                            <Trash2 size={16} />
+                          }
                           className="text-red-600 hover:text-red-800 hover:bg-red-50"
                         >
-                          Delete
+                          {deletingIds.has(doc.id) ? 'Deleting...' : 'Delete'}
                         </Button>
                       </div>
                     </td>
@@ -886,6 +921,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
                 variant="outline"
                 onClick={() => handleReplace(selectedDocument.id)}
                 leftIcon={<Edit3 size={16} />}
+                disabled={deletingIds.has(selectedDocument.id)}
               >
                 Replace Document
               </Button>
@@ -893,10 +929,15 @@ const AIKnowledgeBaseManager: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => handleDelete(selectedDocument.id)}
-                leftIcon={<Trash2 size={16} />}
+                disabled={deletingIds.has(selectedDocument.id)}
+                leftIcon={
+                  deletingIds.has(selectedDocument.id) ? 
+                  <RefreshCw size={16} className="animate-spin" /> : 
+                  <Trash2 size={16} />
+                }
                 className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300 hover:bg-red-50"
               >
-                Delete Document
+                {deletingIds.has(selectedDocument.id) ? 'Deleting...' : 'Delete Document'}
               </Button>
               
               <Button
