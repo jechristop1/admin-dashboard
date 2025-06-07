@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import Button from '../ui/Button';
 import { supabase } from '../../lib/supabase';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface KnowledgeDocument {
   id: string;
@@ -125,6 +129,58 @@ const AIKnowledgeBaseManager: React.FC = () => {
     }
   };
 
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Validate PDF header
+      const header = new Uint8Array(arrayBuffer.slice(0, 4));
+      const pdfHeader = String.fromCharCode(...header);
+      if (!pdfHeader.startsWith('%PDF')) {
+        throw new Error('Invalid PDF file format');
+      }
+
+      // Load PDF document
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const numPages = pdf.numPages;
+      
+      if (numPages < 1) {
+        throw new Error('PDF has no pages');
+      }
+
+      let fullText = '';
+      
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        try {
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ')
+            .trim();
+          
+          if (pageText) {
+            fullText += pageText + '\n\n';
+          }
+        } catch (pageError) {
+          console.error(`Error extracting text from page ${pageNum}:`, pageError);
+          // Continue with other pages even if one fails
+        }
+      }
+
+      if (!fullText.trim()) {
+        throw new Error('No readable text found in PDF. The file might be scanned or image-based.');
+      }
+
+      return fullText.trim();
+    } catch (error: any) {
+      console.error('PDF extraction error:', error);
+      throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    }
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -183,15 +239,16 @@ const AIKnowledgeBaseManager: React.FC = () => {
 
     try {
       // Read file content
-      setUploadProgress(prev => ({ ...prev, progress: 25, status: 'Processing content...' }));
+      setUploadProgress(prev => ({ ...prev, progress: 25, status: 'Extracting content...' }));
       
       let content: string;
+      
       if (uploadForm.file.type === 'application/pdf') {
-        // For PDF files, we'll need to extract text
-        const arrayBuffer = await uploadForm.file.arrayBuffer();
-        // Note: In a real implementation, you'd use PDF.js here
-        content = `[PDF Content from ${uploadForm.file.name}]\n\nThis PDF has been uploaded to the knowledge base.`;
+        // Extract text from PDF
+        setUploadProgress(prev => ({ ...prev, status: 'Extracting text from PDF...' }));
+        content = await extractTextFromPDF(uploadForm.file);
       } else {
+        // Read text files directly
         content = await uploadForm.file.text();
       }
 
@@ -817,7 +874,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">Document Content</h4>
                 <div className="bg-gray-50 rounded-lg p-4 prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-800">
+                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
                     {selectedDocument.content}
                   </div>
                 </div>
