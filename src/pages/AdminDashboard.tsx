@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import Button from '../components/ui/Button';
 import ChatLogViewer from '../components/admin/ChatLogViewer';
+import AIKnowledgeBaseManager from '../components/admin/AIKnowledgeBaseManager';
 import { 
   FileText, 
   User, 
@@ -15,7 +16,9 @@ import {
   Search,
   Filter,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  Database,
+  Brain
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
@@ -37,7 +40,7 @@ interface AdminDocument {
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'documents' | 'chats'>('documents');
+  const [activeTab, setActiveTab] = useState<'documents' | 'chats' | 'knowledge'>('documents');
   const [documents, setDocuments] = useState<AdminDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -297,6 +300,20 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <MessageSquare size={16} />
                     Chat Log Viewer
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('knowledge')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'knowledge'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Brain size={16} />
+                    AI Knowledge Base
                   </div>
                 </button>
               </nav>
@@ -672,9 +689,13 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : activeTab === 'chats' ? (
               <div className="h-full overflow-hidden">
                 <ChatLogViewer />
+              </div>
+            ) : (
+              <div className="h-full overflow-hidden">
+                <AIKnowledgeBaseManager />
               </div>
             )}
           </div>
