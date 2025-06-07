@@ -62,9 +62,7 @@ const AdminDashboard: React.FC = () => {
         .from('user_documents')
         .select(`
           *,
-          user:user_id (
-            email
-          )
+          users(email)
         `)
         .order('upload_date', { ascending: false });
 
@@ -73,7 +71,7 @@ const AdminDashboard: React.FC = () => {
       // Transform the data to include user email
       const documentsWithUserInfo = docsData?.map(doc => ({
         ...doc,
-        user_email: doc.user?.email || 'Unknown'
+        user_email: doc.users?.email || 'Unknown'
       })) || [];
 
       setDocuments(documentsWithUserInfo);
