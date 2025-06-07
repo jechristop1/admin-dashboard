@@ -337,7 +337,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
         .from('documents')
         .delete()
         .eq('id', documentId)
-        .eq('user_id', null); // Ensure we only delete global knowledge base documents
+        .is('user_id', null); // Ensure we only delete global knowledge base documents
 
       if (deleteError) {
         console.error('Delete error:', deleteError);
