@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   FileText, 
   MessageSquare,
-  FileQuestion,
   Download,
   X,
   Menu,
@@ -243,35 +242,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
               )}
 
               {isAdmin && (
-                <>
-                  <Link
-                    to="/knowledge-base"
-                    className={`
-                      flex items-center gap-2 px-3 py-2 rounded-md
-                      ${location.pathname === '/knowledge-base' 
-                        ? 'bg-[#0A2463] text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'}
-                      transition-colors duration-200
-                    `}
-                  >
-                    <FileQuestion size={16} />
-                    <span>Knowledge Base</span>
-                  </Link>
-                  
-                  <Link
-                    to="/admin"
-                    className={`
-                      flex items-center gap-2 px-3 py-2 rounded-md
-                      ${location.pathname === '/admin' 
-                        ? 'bg-[#0A2463] text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'}
-                      transition-colors duration-200
-                    `}
-                  >
-                    <Settings size={16} />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                </>
+                <Link
+                  to="/admin"
+                  className={`
+                    flex items-center gap-2 px-3 py-2 rounded-md
+                    ${location.pathname === '/admin' 
+                      ? 'bg-[#0A2463] text-white' 
+                      : 'text-gray-700 hover:bg-gray-100'}
+                    transition-colors duration-200
+                  `}
+                >
+                  <Settings size={16} />
+                  <span>Admin Dashboard</span>
+                </Link>
               )}
             </div>
           </nav>
