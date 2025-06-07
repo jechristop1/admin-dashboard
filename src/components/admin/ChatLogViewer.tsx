@@ -34,10 +34,6 @@ interface ChatMessage {
   created_at: string;
 }
 
-interface GroupedSessions {
-  [date: string]: ChatSession[];
-}
-
 const ChatLogViewer: React.FC = () => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -46,7 +42,6 @@ const ChatLogViewer: React.FC = () => {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
   const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
@@ -159,50 +154,13 @@ const ChatLogViewer: React.FC = () => {
     await loadSessionMessages(session.id);
   };
 
-  const formatDateKey = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-    
-    if (dateOnly.getTime() === todayOnly.getTime()) {
-      return 'Today';
-    } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
-      return 'Yesterday';
-    } else {
-      return new Intl.DateTimeFormat('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
-      }).format(date);
-    }
-  };
-
-  const groupSessionsByDate = (sessions: ChatSession[]): GroupedSessions => {
-    return sessions.reduce((groups: GroupedSessions, session) => {
-      const dateKey = formatDateKey(session.created_at);
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(session);
-      return groups;
-    }, {});
-  };
-
-  const toggleDayCollapse = (dateKey: string) => {
-    setCollapsedDays(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(dateKey)) {
-        newSet.delete(dateKey);
-      } else {
-        newSet.add(dateKey);
-      }
-      return newSet;
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
     });
   };
 
@@ -344,31 +302,31 @@ const ChatLogViewer: React.FC = () => {
     session.user_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedSessions = groupSessionsByDate(filteredSessions);
-
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Chat Log Viewer</h2>
-          <p className="text-gray-600 mt-1">
-            Review user chat histories and export logs for analysis
-          </p>
+      <div className="mb-8 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Chat Log Viewer</h2>
+            <p className="text-gray-600 mt-1">
+              Review user chat histories and export logs for analysis
+            </p>
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={loadChatSessions}
+            leftIcon={<RefreshCw size={16} />}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
         </div>
-        
-        <Button
-          variant="outline"
-          onClick={loadChatSessions}
-          leftIcon={<RefreshCw size={16} />}
-          disabled={loading}
-        >
-          Refresh
-        </Button>
       </div>
 
       {/* Search and Stats */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 flex-shrink-0">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex-1 max-w-md">
             <div className="relative">
@@ -397,97 +355,107 @@ const ChatLogViewer: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2 flex-shrink-0">
+          <AlertCircle size={20} />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Chat Sessions List - Enhanced Scrollable Container */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="p-6 h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw size={20} className="animate-spin mr-2" />
-              Loading chat sessions...
-            </div>
-          ) : Object.keys(groupedSessions).length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
-              <p>No chat sessions found</p>
-              {searchTerm && (
-                <p className="text-sm mt-1">Try adjusting your search terms</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4 pr-2">
-              {Object.entries(groupedSessions).map(([dateKey, dateSessions]) => {
-                const isCollapsed = collapsedDays.has(dateKey);
-                
-                return (
-                  <div key={dateKey}>
-                    {/* Day Header */}
-                    <button
-                      onClick={() => toggleDayCollapse(dateKey)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {isCollapsed ? (
-                          <ChevronRight size={16} className="text-gray-500" />
-                        ) : (
-                          <ChevronDown size={16} className="text-gray-500" />
-                        )}
-                        <Calendar size={16} className="text-gray-500" />
-                        <span className="font-medium text-gray-900">{dateKey}</span>
+      {/* Chat Sessions Table - Matching Document Management Design */}
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden flex-1">
+        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Session
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Messages
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw size={20} className="animate-spin" />
+                        Loading chat sessions...
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {dateSessions.length} session{dateSessions.length !== 1 ? 's' : ''}
-                      </span>
-                    </button>
-                    
-                    {/* Sessions for this day */}
-                    {!isCollapsed && (
-                      <div className="mt-2 space-y-2">
-                        {dateSessions.map((session) => (
-                          <div
-                            key={session.id}
-                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3">
-                                <MessageSquare size={16} className="text-gray-400 flex-shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-medium text-gray-900 truncate">
-                                    {session.title || 'Untitled Session'}
-                                  </h4>
-                                  <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                      <User size={14} />
-                                      {session.user_email}
-                                    </span>
-                                    <span>{session.message_count} messages</span>
-                                    <span>{formatTimestamp(new Date(session.created_at))}</span>
-                                  </div>
-                                </div>
-                              </div>
+                    </td>
+                  </tr>
+                ) : filteredSessions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
+                      <p>No chat sessions found</p>
+                      {searchTerm && (
+                        <p className="text-sm mt-1">Try adjusting your search terms</p>
+                      )}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSessions.map((session) => (
+                    <tr key={session.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <MessageSquare size={20} className="text-gray-400 mr-3" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {session.title || 'Untitled Session'}
                             </div>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSessionClick(session)}
-                              leftIcon={<Eye size={16} />}
-                            >
-                              View Chat
-                            </Button>
+                            <div className="text-sm text-gray-500">
+                              Session ID: {session.id.substring(0, 8)}...
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <User size={16} className="text-gray-400 mr-2" />
+                          <div className="text-sm text-gray-900">
+                            {session.user_email}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {session.message_count} messages
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          {formatDate(session.created_at)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSessionClick(session)}
+                          leftIcon={<Eye size={16} />}
+                        >
+                          View Chat
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
