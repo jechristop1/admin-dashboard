@@ -402,9 +402,9 @@ const ChatLogViewer: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Sessions List */}
+      {/* Chat Sessions List - Made Scrollable */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-6">
+        <div className="p-6 max-h-[600px] overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <RefreshCw size={20} className="animate-spin mr-2" />
