@@ -91,118 +91,30 @@ const ChatLogViewer: React.FC = () => {
         return;
       }
 
-      // Try multiple approaches to get messages
-      let messagesData: ChatMessage[] = [];
+      // Use the new admin function that bypasses RLS
+      const { data: messagesData, error: messagesError } = await supabase
+        .rpc('get_session_messages_admin', { p_session_id: sessionId });
 
-      // Approach 1: Try the admin function first
-      try {
-        const { data: adminMessages, error: adminError } = await supabase
-          .rpc('get_session_messages', { p_session_id: sessionId });
-
-        if (!adminError && adminMessages && adminMessages.length > 0) {
-          console.log('Admin function succeeded:', adminMessages.length);
-          messagesData = adminMessages;
-        } else if (adminError) {
-          console.warn('Admin function failed:', adminError);
-        }
-      } catch (adminFuncError) {
-        console.warn('Admin function exception:', adminFuncError);
-      }
-
-      // Approach 2: If admin function didn't work or returned no results, try direct query
-      if (messagesData.length === 0) {
-        console.log('Trying direct query as fallback...');
-        try {
-          const { data: directMessages, error: directError } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-            
-          if (!directError && directMessages && directMessages.length > 0) {
-            console.log('Direct query succeeded:', directMessages.length);
-            messagesData = directMessages;
-          } else if (directError) {
-            console.warn('Direct query failed:', directError);
-          }
-        } catch (directQueryError) {
-          console.warn('Direct query exception:', directQueryError);
+      if (messagesError) {
+        console.error('Error loading messages with admin function:', messagesError);
+        
+        // If the admin function fails, it might be a permissions issue
+        if (messagesError.message.includes('Access denied')) {
+          throw new Error('Admin access denied. Please ensure you are logged in with an @forwardassisthq.com email address.');
+        } else if (messagesError.message.includes('function') && messagesError.message.includes('does not exist')) {
+          throw new Error('Admin function not found. Please ensure the database migrations have been applied.');
+        } else {
+          throw new Error(`Failed to load messages: ${messagesError.message}`);
         }
       }
 
-      // Approach 3: If still no messages, try with service role permissions
-      if (messagesData.length === 0) {
-        console.log('Trying service role query...');
-        try {
-          // Create a new client with service role key for admin access
-          const serviceSupabase = supabase; // We'll use the existing client but with admin context
-          
-          const { data: serviceMessages, error: serviceError } = await serviceSupabase
-            .from('messages')
-            .select(`
-              id,
-              session_id,
-              role,
-              content,
-              created_at
-            `)
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-            
-          if (!serviceError && serviceMessages && serviceMessages.length > 0) {
-            console.log('Service query succeeded:', serviceMessages.length);
-            messagesData = serviceMessages;
-          } else if (serviceError) {
-            console.warn('Service query failed:', serviceError);
-          }
-        } catch (serviceQueryError) {
-          console.warn('Service query exception:', serviceQueryError);
-        }
-      }
+      console.log('Messages loaded successfully:', messagesData?.length || 0);
+      setMessages(messagesData || []);
 
-      // Approach 4: Try to get messages by joining with chat_sessions to verify ownership
-      if (messagesData.length === 0) {
-        console.log('Trying joined query...');
-        try {
-          const { data: joinedMessages, error: joinedError } = await supabase
-            .from('messages')
-            .select(`
-              id,
-              session_id,
-              role,
-              content,
-              created_at,
-              chat_sessions!inner(id, user_id)
-            `)
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-            
-          if (!joinedError && joinedMessages && joinedMessages.length > 0) {
-            console.log('Joined query succeeded:', joinedMessages.length);
-            // Transform the data to match our interface
-            messagesData = joinedMessages.map(msg => ({
-              id: msg.id,
-              session_id: msg.session_id,
-              role: msg.role,
-              content: msg.content,
-              created_at: msg.created_at
-            }));
-          } else if (joinedError) {
-            console.warn('Joined query failed:', joinedError);
-          }
-        } catch (joinedQueryError) {
-          console.warn('Joined query exception:', joinedQueryError);
-        }
-      }
-
-      // Set the messages we found (could be empty array)
-      console.log('Final messages count:', messagesData.length);
-      setMessages(messagesData);
-
-      // If we still have no messages, but the session shows a message count > 0, there's likely a permissions issue
-      if (messagesData.length === 0 && session && session.message_count > 0) {
-        console.error('Permission issue: Session has messages but none were retrieved');
-        setError(`Unable to load messages for this session. This may be due to database permissions or RLS policies. Session should have ${session.message_count} messages.`);
+      // If we still have no messages, but the session shows a message count > 0, there might be an issue
+      if ((!messagesData || messagesData.length === 0) && session && session.message_count > 0) {
+        console.warn('Warning: Session shows message count but no messages were retrieved');
+        setError(`Warning: This session should have ${session.message_count} messages, but none were retrieved. This might indicate a data consistency issue.`);
       }
       
     } catch (error: any) {
@@ -609,7 +521,7 @@ const ChatLogViewer: React.FC = () => {
                       Retry Loading Messages
                     </Button>
                     <p className="text-sm text-gray-500">
-                      If this continues to fail, there may be an issue with the database connection or RLS policies.
+                      If this continues to fail, there may be an issue with admin permissions or database functions.
                     </p>
                   </div>
                 </div>
@@ -626,7 +538,7 @@ const ChatLogViewer: React.FC = () => {
                   <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
                   <p className="font-medium">No messages found in this session</p>
                   <p className="text-sm mt-1 text-gray-400">
-                    This session may not have any user or assistant messages, or there may be a loading issue.
+                    This session may have messages that couldn't be loaded due to a technical issue.
                   </p>
                   <div className="mt-6 space-y-3">
                     <Button
