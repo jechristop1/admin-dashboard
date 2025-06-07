@@ -324,55 +324,6 @@ const AdminDashboard: React.FC = () => {
           <div className="flex-1 overflow-hidden">
             {activeTab === 'documents' ? (
               <div className="h-full flex flex-col overflow-hidden">
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 flex-shrink-0">
-                  <div className="bg-white rounded-lg shadow-sm border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Documents</p>
-                        <p className="text-2xl font-bold text-gray-900">{documents.length}</p>
-                      </div>
-                      <FileText size={24} className="text-blue-600" />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow-sm border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Analyzed</p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {documents.filter(doc => doc.status === 'completed').length}
-                        </p>
-                      </div>
-                      <CheckCircle size={24} className="text-green-600" />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow-sm border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Pending</p>
-                        <p className="text-2xl font-bold text-yellow-600">
-                          {documents.filter(doc => doc.status === 'pending').length}
-                        </p>
-                      </div>
-                      <Clock size={24} className="text-yellow-600" />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow-sm border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Errors</p>
-                        <p className="text-2xl font-bold text-red-600">
-                          {documents.filter(doc => doc.status === 'error').length}
-                        </p>
-                      </div>
-                      <AlertCircle size={24} className="text-red-600" />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Filters and Search */}
                 <div className="bg-white rounded-lg shadow-sm border p-4 mb-6 flex-shrink-0">
                   <div className="flex flex-col lg:flex-row gap-4">

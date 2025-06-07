@@ -9,7 +9,11 @@ import {
   Settings,
   BookOpen,
   Tag,
-  Database
+  Database,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  User
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -31,6 +35,13 @@ interface KnowledgeBaseStats {
   totalWords: number;
 }
 
+interface DocumentStats {
+  totalDocuments: number;
+  analyzed: number;
+  pending: number;
+  errors: number;
+}
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,6 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
     uniqueTags: 0,
     totalWords: 0
   });
+  const [documentStats, setDocumentStats] = useState<DocumentStats>({
+    totalDocuments: 0,
+    analyzed: 0,
+    pending: 0,
+    errors: 0
+  });
   
   useEffect(() => {
     if (user?.id && location.pathname === '/documents') {
@@ -58,6 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   useEffect(() => {
     if (isAdmin && location.pathname === '/admin') {
       loadKnowledgeBaseStats();
+      loadDocumentStats();
     }
   }, [isAdmin, location.pathname]);
 
@@ -69,6 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
       }
       if (isAdmin && location.pathname === '/admin') {
         loadKnowledgeBaseStats();
+        loadDocumentStats();
       }
     };
 
@@ -120,6 +139,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
       });
     } catch (error) {
       console.error('Error loading knowledge base stats:', error);
+    }
+  };
+
+  const loadDocumentStats = async () => {
+    try {
+      const { data: docsData, error: docsError } = await supabase
+        .rpc('get_all_user_documents');
+
+      if (docsError) throw docsError;
+
+      const docs = docsData || [];
+      const stats = {
+        totalDocuments: docs.length,
+        analyzed: docs.filter((doc: any) => doc.status === 'completed').length,
+        pending: docs.filter((doc: any) => doc.status === 'pending').length,
+        errors: docs.filter((doc: any) => doc.status === 'error').length
+      };
+
+      setDocumentStats(stats);
+    } catch (error) {
+      console.error('Error loading document stats:', error);
     }
   };
 
@@ -309,6 +349,57 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
               )}
             </div>
           </nav>
+
+          {/* Document Management Stats - Show only on admin page */}
+          {isAdmin && location.pathname === '/admin' && (
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                <FileText size={16} />
+                Document Management
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText size={14} className="text-blue-600" />
+                    <span className="text-sm text-gray-600">Total Documents</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {documentStats.totalDocuments}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={14} className="text-green-600" />
+                    <span className="text-sm text-gray-600">Analyzed</span>
+                  </div>
+                  <span className="text-sm font-medium text-green-600">
+                    {documentStats.analyzed}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-yellow-600" />
+                    <span className="text-sm text-gray-600">Pending</span>
+                  </div>
+                  <span className="text-sm font-medium text-yellow-600">
+                    {documentStats.pending}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={14} className="text-red-600" />
+                    <span className="text-sm text-gray-600">Errors</span>
+                  </div>
+                  <span className="text-sm font-medium text-red-600">
+                    {documentStats.errors}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Knowledge Base Stats - Show only on admin page */}
           {isAdmin && location.pathname === '/admin' && (
