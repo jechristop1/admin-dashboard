@@ -1,0 +1,20 @@
+[
+  {
+    "title": "VA Disability Benefits Overview",
+    "content": "VA disability compensation offers monthly benefits to Veterans for service-connected disabilities. A service-connected disability is a condition that was caused by, made worse by, or resulted from military service. The VA assigns disability ratings from 0% to 100% based on the severity of the condition.\n\nKey Points:\n1. You can file a claim online through VA.gov\n2. You'll need medical evidence of your current condition\n3. Service records showing the event or injury\n4. A nexus linking the current condition to service\n\nCommon Types of Claims:\n- Direct Service Connection\n- Secondary Service Connection\n- Presumptive Service Connection\n- Aggravation\n\nThe VA uses Compensation & Pension (C&P) exams to evaluate disabilities. These exams are crucial for determining your disability rating.",
+    "metadata": {
+      "source": "VA.gov",
+      "category": "Benefits",
+      "type": "Overview"
+    }
+  },
+  {
+    "title": "Understanding C&P Exams",
+    "content": "A Compensation and Pension (C&P) exam is a medical examination of a Veteran's disability, performed by a VA healthcare provider or a VA-contracted provider. The exam is used to gather evidence for a Veteran's disability claim.\n\nPreparing for Your C&P Exam:\n1. Bring relevant medical records\n2. Be honest about your symptoms\n3. Describe your worst days\n4. Explain how the disability affects daily life\n\nAfter the exam, the examiner will write a report that the VA will use to help determine:\n- If your disability is service-connected\n- The severity of your disability\n- Your disability rating",
+    "metadata": {
+      "source": "VA Medical Center",
+      "category": "Claims Process",
+      "type": "Examination"
+    }
+  }
+]
