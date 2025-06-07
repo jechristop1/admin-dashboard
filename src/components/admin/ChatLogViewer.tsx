@@ -402,9 +402,9 @@ const ChatLogViewer: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Sessions List - Made Scrollable */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-6 max-h-[600px] overflow-y-auto">
+      {/* Chat Sessions List - Enhanced Scrollable Container */}
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="p-6 h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <RefreshCw size={20} className="animate-spin mr-2" />
@@ -419,7 +419,7 @@ const ChatLogViewer: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pr-2">
               {Object.entries(groupedSessions).map(([dateKey, dateSessions]) => {
                 const isCollapsed = collapsedDays.has(dateKey);
                 
