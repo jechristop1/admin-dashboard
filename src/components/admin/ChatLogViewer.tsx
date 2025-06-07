@@ -57,6 +57,8 @@ const ChatLogViewer: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      console.log('Loading chat sessions for admin...');
+
       // Get all chat sessions with user info and message counts
       const { data: sessionsData, error: sessionsError } = await supabase
         .rpc('get_all_chat_sessions');
@@ -66,6 +68,7 @@ const ChatLogViewer: React.FC = () => {
         throw sessionsError;
       }
 
+      console.log('Chat sessions loaded:', sessionsData?.length || 0);
       setSessions(sessionsData || []);
     } catch (error: any) {
       console.error('Error loading chat sessions:', error);
@@ -80,6 +83,9 @@ const ChatLogViewer: React.FC = () => {
       setMessagesLoading(true);
       setError(null);
 
+      console.log('Loading messages for session:', sessionId);
+
+      // Use service role key to bypass RLS for admin access
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select('*')
@@ -87,9 +93,11 @@ const ChatLogViewer: React.FC = () => {
         .order('created_at', { ascending: true });
 
       if (messagesError) {
+        console.error('Error loading messages:', messagesError);
         throw messagesError;
       }
 
+      console.log('Messages loaded:', messagesData?.length || 0);
       setMessages(messagesData || []);
     } catch (error: any) {
       console.error('Error loading messages:', error);
@@ -102,6 +110,7 @@ const ChatLogViewer: React.FC = () => {
   const handleSessionClick = async (session: ChatSession) => {
     setSelectedSession(session);
     setShowSessionModal(true);
+    setMessages([]); // Clear previous messages
     await loadSessionMessages(session.id);
   };
 
@@ -497,6 +506,9 @@ const ChatLogViewer: React.FC = () => {
                 <div className="text-center py-8 text-gray-500">
                   <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
                   <p>No messages found in this session</p>
+                  <p className="text-sm mt-1 text-gray-400">
+                    This session may not have any user or assistant messages, or there may be a loading issue.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-6">
