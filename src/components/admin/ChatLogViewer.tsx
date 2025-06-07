@@ -82,6 +82,15 @@ const ChatLogViewer: React.FC = () => {
 
       console.log('Loading messages for session:', sessionId);
 
+      // Check if this session is expected to have messages
+      const session = sessions.find(s => s.id === sessionId);
+      if (session && session.message_count === 0) {
+        console.log('Session has no messages according to message_count');
+        setMessages([]);
+        setMessagesLoading(false);
+        return;
+      }
+
       // Try multiple approaches to get messages
       let messagesData: ChatMessage[] = [];
 
@@ -191,9 +200,9 @@ const ChatLogViewer: React.FC = () => {
       setMessages(messagesData);
 
       // If we still have no messages, but the session shows a message count > 0, there's likely a permissions issue
-      if (messagesData.length === 0 && selectedSession?.message_count > 0) {
+      if (messagesData.length === 0 && session && session.message_count > 0) {
         console.error('Permission issue: Session has messages but none were retrieved');
-        setError(`Unable to load messages for this session. This may be due to database permissions or RLS policies. Session should have ${selectedSession.message_count} messages.`);
+        setError(`Unable to load messages for this session. This may be due to database permissions or RLS policies. Session should have ${session.message_count} messages.`);
       }
       
     } catch (error: any) {
@@ -492,7 +501,11 @@ const ChatLogViewer: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '120px' }}>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          session.message_count === 0 
+                            ? 'bg-gray-100 text-gray-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
                           {session.message_count} messages
                         </span>
                       </td>
@@ -599,6 +612,14 @@ const ChatLogViewer: React.FC = () => {
                       If this continues to fail, there may be an issue with the database connection or RLS policies.
                     </p>
                   </div>
+                </div>
+              ) : selectedSession.message_count === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare size={24} className="mx-auto mb-2 text-gray-400" />
+                  <p className="font-medium">This session has no messages</p>
+                  <p className="text-sm mt-1 text-gray-400">
+                    This is a new or empty chat session that hasn't had any user or assistant messages yet.
+                  </p>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
