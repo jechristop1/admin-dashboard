@@ -114,6 +114,9 @@ const AIKnowledgeBaseManager: React.FC = () => {
       if (fetchError) throw fetchError;
 
       setDocuments(data || []);
+      
+      // Dispatch event to update sidebar stats
+      window.dispatchEvent(new CustomEvent('documentUploaded'));
     } catch (error: any) {
       console.error('Error loading knowledge base documents:', error);
       setError(`Failed to load documents: ${error.message}`);
@@ -337,7 +340,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="mb-8 flex-shrink-0">
+      <div className="mb-6 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -366,41 +369,6 @@ const AIKnowledgeBaseManager: React.FC = () => {
             >
               Upload Document
             </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 flex-shrink-0">
-        <div className="bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Documents</p>
-              <p className="text-2xl font-bold text-gray-900">{documents.length}</p>
-            </div>
-            <BookOpen size={24} className="text-blue-600" />
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Unique Tags</p>
-              <p className="text-2xl font-bold text-green-600">{availableTags.length}</p>
-            </div>
-            <Tag size={24} className="text-green-600" />
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Words</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {documents.reduce((sum, doc) => sum + (doc.metadata.word_count || 0), 0).toLocaleString()}
-              </p>
-            </div>
-            <FileText size={24} className="text-purple-600" />
           </div>
         </div>
       </div>
@@ -467,9 +435,9 @@ const AIKnowledgeBaseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Table - Fixed height with proper scrolling */}
+      {/* Documents Table - Increased height for more space */}
       <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
-        <div className="overflow-auto" style={{ height: '400px' }}>
+        <div className="overflow-auto" style={{ height: '500px' }}>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>

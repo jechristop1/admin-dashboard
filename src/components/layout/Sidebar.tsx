@@ -6,7 +6,10 @@ import {
   X,
   Menu,
   Trash2,
-  Settings
+  Settings,
+  BookOpen,
+  Tag,
+  Database
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -22,6 +25,12 @@ interface UserDocument {
   url: string;
 }
 
+interface KnowledgeBaseStats {
+  totalDocuments: number;
+  uniqueTags: number;
+  totalWords: number;
+}
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -34,6 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   const navigate = useNavigate();
   const isAdmin = user?.email?.endsWith('@forwardassisthq.com');
   const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [knowledgeBaseStats, setKnowledgeBaseStats] = useState<KnowledgeBaseStats>({
+    totalDocuments: 0,
+    uniqueTags: 0,
+    totalWords: 0
+  });
   
   useEffect(() => {
     if (user?.id && location.pathname === '/documents') {
@@ -41,11 +55,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
     }
   }, [user?.id, location.pathname]);
 
+  useEffect(() => {
+    if (isAdmin && location.pathname === '/admin') {
+      loadKnowledgeBaseStats();
+    }
+  }, [isAdmin, location.pathname]);
+
   // Listen for document upload events
   useEffect(() => {
     const handleDocumentUploaded = () => {
       if (location.pathname === '/documents') {
         loadDocuments();
+      }
+      if (isAdmin && location.pathname === '/admin') {
+        loadKnowledgeBaseStats();
       }
     };
 
@@ -53,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
     return () => {
       window.removeEventListener('documentUploaded', handleDocumentUploaded);
     };
-  }, [location.pathname]);
+  }, [location.pathname, isAdmin]);
 
   const loadDocuments = async () => {
     if (!user?.id) return;
@@ -69,6 +92,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
       setDocuments(data || []);
     } catch (error) {
       console.error('Error loading documents:', error);
+    }
+  };
+
+  const loadKnowledgeBaseStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('metadata')
+        .is('user_id', null); // Only global knowledge base documents
+
+      if (error) throw error;
+
+      const docs = data || [];
+      const allTags = new Set<string>();
+      let totalWords = 0;
+
+      docs.forEach(doc => {
+        doc.metadata?.tags?.forEach((tag: string) => allTags.add(tag));
+        totalWords += doc.metadata?.word_count || 0;
+      });
+
+      setKnowledgeBaseStats({
+        totalDocuments: docs.length,
+        uniqueTags: allTags.size,
+        totalWords
+      });
+    } catch (error) {
+      console.error('Error loading knowledge base stats:', error);
     }
   };
 
@@ -258,6 +309,47 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
               )}
             </div>
           </nav>
+
+          {/* Knowledge Base Stats - Show only on admin page */}
+          {isAdmin && location.pathname === '/admin' && (
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                <Database size={16} />
+                Knowledge Base Stats
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={14} className="text-blue-600" />
+                    <span className="text-sm text-gray-600">Documents</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {knowledgeBaseStats.totalDocuments}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag size={14} className="text-green-600" />
+                    <span className="text-sm text-gray-600">Tags</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {knowledgeBaseStats.uniqueTags}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText size={14} className="text-purple-600" />
+                    <span className="text-sm text-gray-600">Words</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    {knowledgeBaseStats.totalWords.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Chat History */}
           {location.pathname === '/' && (
