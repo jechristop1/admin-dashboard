@@ -467,9 +467,9 @@ const AIKnowledgeBaseManager: React.FC = () => {
         </div>
       )}
 
-      {/* Documents Table - Fixed height with scrolling */}
-      <div className="bg-white rounded-lg shadow-sm border flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-auto">
+      {/* Documents Table - Fixed height with proper scrolling */}
+      <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
+        <div className="overflow-auto" style={{ height: '400px' }}>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
