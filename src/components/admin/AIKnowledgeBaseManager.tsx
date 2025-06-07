@@ -321,6 +321,12 @@ const AIKnowledgeBaseManager: React.FC = () => {
   };
 
   const handleDelete = async (documentId: string) => {
+    if (!documentId) {
+      console.error('No document ID provided for deletion');
+      setError('Invalid document ID');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
       return;
     }
@@ -330,9 +336,10 @@ const AIKnowledgeBaseManager: React.FC = () => {
     setError(null);
 
     try {
-      console.log('Attempting to delete document:', documentId);
+      console.log('Attempting to delete document with ID:', documentId);
 
       // Delete the document from the knowledge base
+      // Use the correct filter for global knowledge base documents
       const { error: deleteError } = await supabase
         .from('documents')
         .delete()
@@ -340,7 +347,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
         .is('user_id', null); // Ensure we only delete global knowledge base documents
 
       if (deleteError) {
-        console.error('Delete error:', deleteError);
+        console.error('Supabase delete error:', deleteError);
         throw new Error(`Failed to delete document: ${deleteError.message}`);
       }
 
@@ -352,7 +359,10 @@ const AIKnowledgeBaseManager: React.FC = () => {
         setShowViewModal(false);
       }
 
-      // Reload documents to reflect the change
+      // Remove the document from local state immediately for better UX
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+
+      // Also reload documents to ensure consistency
       await loadDocuments();
 
     } catch (error: any) {
