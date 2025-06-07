@@ -366,11 +366,9 @@ const AIKnowledgeBaseManager: React.FC = () => {
 
       console.log('Delete operation completed. Rows affected:', count);
 
-      if (count === 0) {
-        throw new Error('No document was deleted. The document may not exist or may not be a global knowledge base document.');
-      }
-
-      console.log('Document deleted successfully');
+      // Remove the document from local state regardless of whether it was found in the database
+      // This ensures the UI reflects the user's intent to remove the item
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
 
       // Close view modal if this document was being viewed
       if (selectedDocument?.id === documentId) {
@@ -378,11 +376,10 @@ const AIKnowledgeBaseManager: React.FC = () => {
         setShowViewModal(false);
       }
 
-      // Remove the document from local state immediately for better UX
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-
       // Dispatch event to update sidebar stats
       window.dispatchEvent(new CustomEvent('documentUploaded'));
+
+      console.log('Document removed from UI successfully');
 
       // Also reload documents to ensure consistency
       setTimeout(() => {
