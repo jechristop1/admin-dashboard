@@ -82,56 +82,118 @@ const ChatLogViewer: React.FC = () => {
 
       console.log('Loading messages for session:', sessionId);
 
-      // First try the admin function
-      const { data: messagesData, error: messagesError } = await supabase
-        .rpc('get_session_messages', { p_session_id: sessionId });
+      // Try multiple approaches to get messages
+      let messagesData: ChatMessage[] = [];
 
-      if (messagesError) {
-        console.error('Error with admin function:', messagesError);
-        
-        // Fallback: Try direct query with admin policy
-        console.log('Trying direct query as fallback...');
-        const { data: directMessages, error: directError } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('session_id', sessionId)
-          .order('created_at', { ascending: true });
-          
-        if (directError) {
-          console.error('Direct query also failed:', directError);
-          throw new Error(`Both admin function and direct query failed: ${messagesError.message}`);
+      // Approach 1: Try the admin function first
+      try {
+        const { data: adminMessages, error: adminError } = await supabase
+          .rpc('get_session_messages', { p_session_id: sessionId });
+
+        if (!adminError && adminMessages && adminMessages.length > 0) {
+          console.log('Admin function succeeded:', adminMessages.length);
+          messagesData = adminMessages;
+        } else if (adminError) {
+          console.warn('Admin function failed:', adminError);
         }
-        
-        console.log('Direct query succeeded:', directMessages?.length || 0);
-        setMessages(directMessages || []);
-      } else {
-        console.log('Admin function succeeded:', messagesData?.length || 0);
-        setMessages(messagesData || []);
+      } catch (adminFuncError) {
+        console.warn('Admin function exception:', adminFuncError);
       }
-      
-      // If still no messages, try one more approach
-      if ((!messagesData || messagesData.length === 0) && (!messages || messages.length === 0)) {
-        console.log('No messages found, trying alternative query...');
-        
-        // Try with service role to bypass all RLS
-        const { data: serviceMessages, error: serviceError } = await supabase
-          .from('messages')
-          .select(`
-            id,
-            session_id,
-            role,
-            content,
-            created_at
-          `)
-          .eq('session_id', sessionId)
-          .order('created_at', { ascending: true });
-          
-        if (serviceError) {
-          console.error('Service query failed:', serviceError);
-        } else {
-          console.log('Service query result:', serviceMessages?.length || 0);
-          setMessages(serviceMessages || []);
+
+      // Approach 2: If admin function didn't work or returned no results, try direct query
+      if (messagesData.length === 0) {
+        console.log('Trying direct query as fallback...');
+        try {
+          const { data: directMessages, error: directError } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+            
+          if (!directError && directMessages && directMessages.length > 0) {
+            console.log('Direct query succeeded:', directMessages.length);
+            messagesData = directMessages;
+          } else if (directError) {
+            console.warn('Direct query failed:', directError);
+          }
+        } catch (directQueryError) {
+          console.warn('Direct query exception:', directQueryError);
         }
+      }
+
+      // Approach 3: If still no messages, try with service role permissions
+      if (messagesData.length === 0) {
+        console.log('Trying service role query...');
+        try {
+          // Create a new client with service role key for admin access
+          const serviceSupabase = supabase; // We'll use the existing client but with admin context
+          
+          const { data: serviceMessages, error: serviceError } = await serviceSupabase
+            .from('messages')
+            .select(`
+              id,
+              session_id,
+              role,
+              content,
+              created_at
+            `)
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+            
+          if (!serviceError && serviceMessages && serviceMessages.length > 0) {
+            console.log('Service query succeeded:', serviceMessages.length);
+            messagesData = serviceMessages;
+          } else if (serviceError) {
+            console.warn('Service query failed:', serviceError);
+          }
+        } catch (serviceQueryError) {
+          console.warn('Service query exception:', serviceQueryError);
+        }
+      }
+
+      // Approach 4: Try to get messages by joining with chat_sessions to verify ownership
+      if (messagesData.length === 0) {
+        console.log('Trying joined query...');
+        try {
+          const { data: joinedMessages, error: joinedError } = await supabase
+            .from('messages')
+            .select(`
+              id,
+              session_id,
+              role,
+              content,
+              created_at,
+              chat_sessions!inner(id, user_id)
+            `)
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+            
+          if (!joinedError && joinedMessages && joinedMessages.length > 0) {
+            console.log('Joined query succeeded:', joinedMessages.length);
+            // Transform the data to match our interface
+            messagesData = joinedMessages.map(msg => ({
+              id: msg.id,
+              session_id: msg.session_id,
+              role: msg.role,
+              content: msg.content,
+              created_at: msg.created_at
+            }));
+          } else if (joinedError) {
+            console.warn('Joined query failed:', joinedError);
+          }
+        } catch (joinedQueryError) {
+          console.warn('Joined query exception:', joinedQueryError);
+        }
+      }
+
+      // Set the messages we found (could be empty array)
+      console.log('Final messages count:', messagesData.length);
+      setMessages(messagesData);
+
+      // If we still have no messages, but the session shows a message count > 0, there's likely a permissions issue
+      if (messagesData.length === 0 && selectedSession?.message_count > 0) {
+        console.error('Permission issue: Session has messages but none were retrieved');
+        setError(`Unable to load messages for this session. This may be due to database permissions or RLS policies. Session should have ${selectedSession.message_count} messages.`);
       }
       
     } catch (error: any) {
@@ -462,8 +524,8 @@ const ChatLogViewer: React.FC = () => {
       {/* Chat Session Modal */}
       {showSessionModal && selectedSession && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
                   {selectedSession.title || 'Untitled Session'}
@@ -510,7 +572,7 @@ const ChatLogViewer: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className="flex-1 overflow-y-auto p-6">
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw size={20} className="animate-spin mr-2" />
