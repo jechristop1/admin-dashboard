@@ -361,26 +361,26 @@ const ChatLogViewer: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Sessions Table - Matching Document Management Design */}
+      {/* Chat Sessions Table - With Horizontal Scroll */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden flex-1">
         <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto min-w-full">
+            <table className="w-full divide-y divide-gray-200" style={{ minWidth: '800px' }}>
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" style={{ minWidth: '300px' }}>
                     Session
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" style={{ minWidth: '200px' }}>
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" style={{ minWidth: '120px' }}>
                     Messages
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" style={{ minWidth: '180px' }}>
                     Created
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" style={{ minWidth: '120px' }}>
                     Actions
                   </th>
                 </tr>
@@ -408,39 +408,39 @@ const ChatLogViewer: React.FC = () => {
                 ) : (
                   filteredSessions.map((session) => (
                     <tr key={session.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '300px' }}>
                         <div className="flex items-center">
-                          <MessageSquare size={20} className="text-gray-400 mr-3" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
+                          <MessageSquare size={20} className="text-gray-400 mr-3 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-900 truncate">
                               {session.title || 'Untitled Session'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 truncate">
                               Session ID: {session.id.substring(0, 8)}...
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '200px' }}>
                         <div className="flex items-center">
-                          <User size={16} className="text-gray-400 mr-2" />
-                          <div className="text-sm text-gray-900">
+                          <User size={16} className="text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="text-sm text-gray-900 truncate">
                             {session.user_email}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '120px' }}>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {session.message_count} messages
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" style={{ minWidth: '180px' }}>
                         <div className="flex items-center text-sm text-gray-900">
-                          <Calendar size={16} className="text-gray-400 mr-2" />
-                          {formatDate(session.created_at)}
+                          <Calendar size={16} className="text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="truncate">{formatDate(session.created_at)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" style={{ minWidth: '120px' }}>
                         <Button
                           variant="outline"
                           size="sm"
