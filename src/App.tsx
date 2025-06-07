@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Chat from './pages/Chat';
 import Documents from './pages/Documents';
 import KnowledgeBase from './pages/KnowledgeBase';
+import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import { useAuthStore } from './store/authStore';
 import { supabase } from './lib/supabase';
@@ -84,6 +85,16 @@ function App() {
           element={
             isAuthenticated && isAdmin ? (
               <KnowledgeBase />
+            ) : (
+              <Navigate to={isAuthenticated ? "/" : "/login"} />
+            )
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            isAuthenticated && isAdmin ? (
+              <AdminDashboard />
             ) : (
               <Navigate to={isAuthenticated ? "/" : "/login"} />
             )
