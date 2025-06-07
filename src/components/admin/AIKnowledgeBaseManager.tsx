@@ -602,8 +602,8 @@ const AIKnowledgeBaseManager: React.FC = () => {
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">
                 Upload Knowledge Base Document
               </h3>
@@ -626,7 +626,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-6">
                 {/* File Upload */}
                 <div>
@@ -758,7 +758,7 @@ const AIKnowledgeBaseManager: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+            <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 flex-shrink-0">
               <Button
                 variant="ghost"
                 onClick={() => {
