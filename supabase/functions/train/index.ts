@@ -49,10 +49,6 @@ Deno.serve(async (req) => {
     const results = [];
 
     for (const doc of documents) {
-      if (!doc.user_id) {
-        throw new Error('user_id is required for each document');
-      }
-
       // Split content into chunks
       const contentChunks = chunkText(doc.content);
       
