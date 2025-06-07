@@ -470,32 +470,32 @@ const AIKnowledgeBaseManager: React.FC = () => {
     setError(null);
 
     try {
-      logInfo('handleDelete', 'Starting database delete operation', { documentId });
+      logInfo('handleDelete', 'Starting admin delete operation', { documentId });
 
-      // Delete the document from the knowledge base
-      // Only delete documents where user_id is null (global knowledge base)
-      const { error: deleteError, count } = await supabase
-        .from('documents')
-        .delete({ count: 'exact' })
-        .eq('id', documentId)
-        .is('user_id', null);
+      // Use the new admin function to delete knowledge base documents
+      const { data, error: deleteError } = await supabase.rpc('delete_knowledge_base_document', {
+        p_document_id: documentId,
+      });
 
       if (deleteError) {
         logError('handleDelete', deleteError, { 
           documentId,
-          operation: 'supabase delete',
+          operation: 'delete_knowledge_base_document RPC',
           table: 'documents'
         });
-        throw new Error(`Database error: ${deleteError.message}`);
+        throw new Error(`Admin deletion failed: ${deleteError.message}`);
       }
 
-      logInfo('handleDelete', 'Database delete operation completed', { 
+      logInfo('handleDelete', 'Admin delete operation completed', { 
         documentId,
-        rowsAffected: count 
+        deletionSuccessful: data 
       });
 
+      if (!data) {
+        logInfo('handleDelete', 'Document was not found in database, removing from UI anyway');
+      }
+
       // Always remove from local state to ensure UI consistency
-      // This handles cases where the document might not exist in DB but exists in UI
       setDocuments(prev => {
         const newDocs = prev.filter(doc => doc.id !== documentId);
         logInfo('handleDelete', `Removed document from local state`, {
@@ -518,11 +518,14 @@ const AIKnowledgeBaseManager: React.FC = () => {
 
       logInfo('handleDelete', 'Delete operation completed successfully');
 
-      // Reload documents to ensure consistency (with delay to avoid race conditions)
-      setTimeout(() => {
-        logInfo('handleDelete', 'Reloading documents for consistency check');
-        loadDocuments();
-      }, 500);
+      // Show success message
+      if (data) {
+        // Document was successfully deleted from database
+        console.log('✅ Document successfully deleted from knowledge base');
+      } else {
+        // Document wasn't found in database but removed from UI
+        console.log('⚠️ Document not found in database but removed from interface');
+      }
 
     } catch (error: any) {
       logError('handleDelete', error, { 
