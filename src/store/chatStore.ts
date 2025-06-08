@@ -88,6 +88,76 @@ export const ASSISTANT_MODES = {
 
 export type AssistantMode = keyof typeof ASSISTANT_MODES;
 
+// Intelligent mode detection based on message content
+const MODE_KEYWORDS = {
+  claims_mode: [
+    'claim', 'claims', 'file a claim', 'filing claim', 'disability claim', 'va claim',
+    'rating', 'disability rating', 'service connection', 'c&p exam', 'compensation',
+    'appeal', 'appeals', 'evidence', 'nexus', 'medical evidence', 'service records',
+    'rating decision', 'denied claim', 'increase rating', 'secondary condition',
+    'presumptive', 'direct service connection', 'aggravation', 'dbq'
+  ],
+  mental_health_mode: [
+    'ptsd', 'mental health', 'depression', 'anxiety', 'trauma', 'mst', 'military sexual trauma',
+    'counseling', 'therapy', 'psychiatric', 'psychological', 'suicide', 'crisis',
+    'mental health claim', 'ptsd claim', 'therapy', 'counselor', 'psychiatrist'
+  ],
+  education_mode: [
+    'gi bill', 'education', 'school', 'college', 'university', 'degree', 'vr&e',
+    'chapter 31', 'chapter 33', 'vocational rehabilitation', 'education benefits',
+    'tuition', 'bah', 'housing allowance', 'yellow ribbon', 'stem scholarship'
+  ],
+  career_mode: [
+    'job', 'career', 'employment', 'work', 'resume', 'interview', 'hiring',
+    'linkedin', 'skills', 'translate military experience', 'civilian job',
+    'federal employment', 'usajobs', 'veteran preference'
+  ],
+  finance_mode: [
+    'pay', 'payment', 'compensation', 'money', 'budget', 'financial', 'back pay',
+    'effective date', 'offset', 'debt', 'overpayment', 'direct deposit',
+    'disability pay', 'va pay', 'payment schedule'
+  ],
+  housing_mode: [
+    'home loan', 'va loan', 'mortgage', 'house', 'housing', 'coe', 'certificate of eligibility',
+    'real estate', 'buying house', 'refinance', 'property', 'home buying'
+  ],
+  survivor_mode: [
+    'survivor', 'dependent', 'spouse', 'widow', 'widower', 'dic', 'dependency compensation',
+    'champva', 'survivor benefits', 'death benefits', 'accrued benefits',
+    'children benefits', 'family benefits'
+  ],
+  transition_mode: [
+    'transition', 'separation', 'discharge', 'leaving military', 'civilian life',
+    'tap', 'transition assistance', 'ets', 'retirement', 'getting out'
+  ],
+  document_mode: [
+    'document', 'letter', 'rating decision', 'c&p exam', 'dbq', 'medical records',
+    'analyze', 'review', 'explain', 'what does this mean', 'help me understand',
+    'uploaded', 'attachment'
+  ],
+  training_mode: [
+    'train', 'training', 'teach', 'learn', 'how does', 'explain how',
+    'vso training', 'help other veterans', 'understand the process'
+  ]
+};
+
+function detectModeFromMessage(message: string): AssistantMode | null {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check each mode's keywords
+  for (const [mode, keywords] of Object.entries(MODE_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerMessage.includes(keyword.toLowerCase())) {
+        console.log(`Mode detected: ${mode} (matched keyword: "${keyword}")`);
+        return mode as AssistantMode;
+      }
+    }
+  }
+  
+  console.log('No specific mode detected, staying in current mode');
+  return null;
+}
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
@@ -100,6 +170,7 @@ interface ChatState {
   createNewSession: () => Promise<string>;
   updateSessionTitle: (sessionId: string, messages: Message[]) => Promise<void>;
   switchMode: (mode: AssistantMode) => Promise<void>;
+  detectAndSwitchMode: (message: string) => Promise<void>;
 }
 
 // Generate a unique ID for messages
@@ -275,5 +346,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     await get().addMessage(systemMessage);
     
     console.log('Mode switch complete, new mode:', get().currentMode);
+  },
+
+  detectAndSwitchMode: async (message: string) => {
+    console.log('Detecting mode for message:', message);
+    
+    const detectedMode = detectModeFromMessage(message);
+    
+    if (detectedMode && detectedMode !== get().currentMode) {
+      console.log('Auto-switching to detected mode:', detectedMode);
+      await get().switchMode(detectedMode);
+    }
   },
 }));
