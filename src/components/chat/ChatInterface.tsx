@@ -444,7 +444,7 @@ When answering questions:
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center max-w-2xl mx-auto">
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
             <div className="w-20 h-20 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
               <Bot size={40} className="text-[#FFBA08]" />
             </div>
@@ -454,7 +454,7 @@ When answering questions:
             <p className="text-gray-600 mb-8 text-lg leading-relaxed">
               I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-4xl">
               {[
                 "File a VA claim",
                 "Read my VA Letter",
@@ -463,7 +463,7 @@ When answering questions:
                 "Get Job Help",
                 "Understand my VA Pay",
                 "VA Home Loans",
-                "Support for Dependents or Surviors",
+                "Support for Dependents or Survivors",
                 "Transition to Civilian Life",
                 "Train me to Understand VA Claims"
               ].map((suggestion, i) => (
@@ -481,7 +481,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
