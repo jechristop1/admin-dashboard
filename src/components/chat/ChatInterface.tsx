@@ -389,11 +389,11 @@ When answering questions:
       {/* Header */}
       <div className="flex-none border-b border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4 relative">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center">
             <div className="w-12 h-12 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
               <Bot size={24} className="text-[#FFBA08]" />
             </div>
-            <div className="text-left">
+            <div className="text-left ml-3">
               <h1 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
                 ForwardOps AI
               </h1>
@@ -475,7 +475,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
