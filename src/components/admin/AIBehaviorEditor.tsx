@@ -586,8 +586,8 @@ ${modeDetails.compliance}
         </div>
       )}
 
-      {/* System Messages */}
-      <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
+      {/* System Messages - Made properly scrollable */}
+      <div className="bg-white rounded-lg shadow-sm border flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <div className="divide-y divide-gray-200">
             {loading ? (
