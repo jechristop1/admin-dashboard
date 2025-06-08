@@ -1,34 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MessageSquare, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Save, 
-  X, 
-  AlertCircle, 
-  CheckCircle, 
-  RefreshCw,
-  Settings,
-  FileText,
-  Eye,
-  EyeOff,
-  Info,
-  Brain,
-  Zap,
-  Target,
-  Shield,
-  BookOpen,
-  Users,
-  Heart,
-  GraduationCap,
-  Briefcase,
-  DollarSign,
-  Home,
-  UserHeart,
-  School,
-  HelpCircle
-} from 'lucide-react';
+import { MessageSquare, Plus, Edit3, Trash2, Save, X, AlertCircle, CheckCircle, RefreshCw, Settings, FileText, Eye, EyeOff, Info, Brain, Zap, Target, Shield, BookOpen, Users, Heart, GraduationCap, Briefcase, DollarSign, Home, FolderHeart as UserHeart, School, HelpCircle } from 'lucide-react';
 import Button from '../ui/Button';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
