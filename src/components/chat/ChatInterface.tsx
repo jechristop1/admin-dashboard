@@ -445,7 +445,7 @@ When answering questions:
       <div className="flex-1 overflow-y-auto">
         {displayMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+            <p className="text-gray-600 mb-8 text-lg leading-relaxed pt-8">
               I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-4xl">
