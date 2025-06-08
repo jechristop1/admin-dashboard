@@ -393,7 +393,7 @@ When answering questions:
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-end">
             {displayMessages.length > 0 && (
-              <div className="relative" ref={downloadMenuRef}>
+              <div className="relative\" ref={downloadMenuRef}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -476,7 +476,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking" className="w-full bg-gray-50">
+                <div key="thinking\" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
