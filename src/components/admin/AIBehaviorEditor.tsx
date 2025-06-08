@@ -13,7 +13,21 @@ import {
   FileText,
   Eye,
   EyeOff,
-  Info
+  Info,
+  Brain,
+  Zap,
+  Target,
+  Shield,
+  BookOpen,
+  Users,
+  Heart,
+  GraduationCap,
+  Briefcase,
+  DollarSign,
+  Home,
+  UserHeart,
+  School,
+  HelpCircle
 } from 'lucide-react';
 import Button from '../ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -40,96 +54,188 @@ interface ChatMode {
   tone: string;
   behavior: string;
   compliance: string;
+  icon: React.ReactNode;
+  color: string;
+  triggers: string[];
+  examples: string[];
 }
 
 const CHAT_MODES: ChatMode[] = [
   {
     value: 'claims_mode',
     label: 'VA Claims Support',
-    description: 'Guides users through filing, evidence gathering, effective dates, C&P exams, and service connection.',
+    description: 'Step-by-step guidance through VA disability claims.',
     tone: 'Tactical, veteran-to-veteran, direct',
-    behavior: 'Procedural guidance for VA claims process',
-    compliance: 'Must follow 38 CFR and M21-1 guidance. No legal advice—only procedural explanation.'
+    behavior: 'Guides veterans through VA disability claims, including service connection, secondary claims, and evidence development.',
+    compliance: '38 CFR Part 3 & 4, M21-1. No legal advice.',
+    icon: <FileText size={20} />,
+    color: 'blue',
+    triggers: ['claim', 'disability', 'rating', 'service connection', 'C&P exam', 'evidence', 'appeal'],
+    examples: [
+      'How do I file a VA claim?',
+      'What evidence do I need for my PTSD claim?',
+      'How are disability ratings calculated?'
+    ]
   },
   {
     value: 'transition_mode',
     label: 'Transition & TAP Guidance',
-    description: 'Covers the 12-month separation timeline, TAP prep, mindset shift, job and school planning.',
+    description: 'Supports veterans during the military-to-civilian transition.',
     tone: 'Mission-focused, motivational',
-    behavior: 'Transition planning and TAP preparation',
-    compliance: 'Use verified VA, DoD, and TAP-aligned resources. No financial or legal advice.'
+    behavior: 'Help with TAP timelines, job prep, document gathering, and mindset shifts.',
+    compliance: 'Use official TAP/DoD/VA tools. Avoid financial or legal guidance.',
+    icon: <Target size={20} />,
+    color: 'green',
+    triggers: ['transition', 'TAP', 'separation', 'civilian', 'job search', 'resume', 'interview'],
+    examples: [
+      'How do I prepare for transition?',
+      'What is the TAP program?',
+      'Help me translate my military skills'
+    ]
   },
   {
     value: 'document_mode',
     label: 'Document Analysis',
-    description: 'Returns a two-part output: (1) plain-English summary, and (2) structured VSO-style report.',
+    description: 'Summarizes and interprets uploaded VA documents.',
     tone: 'Clear, professional',
-    behavior: 'Document analysis with structured reporting',
-    compliance: 'No reinterpretation of VA decisions. Use M21-1 for procedural clarity.'
+    behavior: 'Returns a two-part output: (1) plain-English summary, and (2) structured VSO-style report.',
+    compliance: 'M21-1 formatting logic only. No legal interpretations.',
+    icon: <BookOpen size={20} />,
+    color: 'purple',
+    triggers: ['analyze', 'document', 'rating decision', 'C&P exam', 'DBQ', 'what does this mean'],
+    examples: [
+      'What does this decision letter mean?',
+      'Analyze my C&P exam results',
+      'Help me understand this rating decision'
+    ]
   },
   {
     value: 'mental_health_mode',
     label: 'Mental Health Support',
-    description: 'Offers peer-level support and VA claim guidance related to PTSD, MST, anxiety, depression.',
+    description: 'Offers trauma-informed peer support and mental health claims guidance.',
     tone: 'Empathetic, trauma-informed',
-    behavior: 'Mental health support with claims guidance',
-    compliance: 'Never diagnose. Refer to VA, Vet Centers, or MST coordinators. Use M21-1 Part III, Subpart iv.'
+    behavior: 'Support veterans dealing with PTSD, MST, anxiety, or depression.',
+    compliance: 'M21-1 Part III, Subpart iv. No clinical or therapy language.',
+    icon: <Heart size={20} />,
+    color: 'pink',
+    triggers: ['PTSD', 'mental health', 'depression', 'anxiety', 'MST', 'trauma', 'counseling'],
+    examples: [
+      'I need help with my PTSD claim',
+      'Where can I get mental health support?',
+      'How do I file for MST-related conditions?'
+    ]
   },
   {
     value: 'education_mode',
     label: 'Education & GI Bill Support',
-    description: 'Explains how to apply for GI Bill, VR&E, use the COE, and compare schools.',
+    description: 'Explains how to access and use VA education benefits.',
     tone: 'Helpful, informative',
-    behavior: 'Education benefits guidance',
-    compliance: 'Use official VA education policies. No personal education advising.'
+    behavior: 'Explain eligibility, COE, school selection, and application steps.',
+    compliance: 'Align with VA education policy. No personal counseling.',
+    icon: <GraduationCap size={20} />,
+    color: 'indigo',
+    triggers: ['GI Bill', 'education', 'school', 'college', 'VR&E', 'Chapter 31', 'Chapter 33'],
+    examples: [
+      'How do I use the GI Bill?',
+      'What schools accept VA benefits?',
+      'Can I transfer my GI Bill to my kids?'
+    ]
   },
   {
     value: 'career_mode',
     label: 'Career & Job Readiness',
-    description: 'Helps translate military experience, build resumes, optimize LinkedIn, and explore careers.',
+    description: 'Helps veterans prepare for employment.',
     tone: 'Civilian-friendly, practical',
-    behavior: 'Career transition and job readiness',
-    compliance: 'Avoid specific job placement advice. Recommend VA and DoL tools (e.g., O*NET, Hiring Our Heroes).'
+    behavior: 'Help translate military experience, build resumes, and prepare for interviews.',
+    compliance: 'No job placement or promises. Use general tools only.',
+    icon: <Briefcase size={20} />,
+    color: 'orange',
+    triggers: ['job', 'career', 'resume', 'interview', 'LinkedIn', 'employment', 'work'],
+    examples: [
+      'Help me build my resume',
+      'How do I translate military skills?',
+      'What jobs are good for veterans?'
+    ]
   },
   {
     value: 'finance_mode',
     label: 'Financial Planning & VA Pay',
-    description: 'Educates users on disability pay, budgeting after transition, and understanding back pay or offsets.',
+    description: 'Helps veterans understand disability compensation and budgeting.',
     tone: 'Grounded, calm',
-    behavior: 'Financial education focused on VA benefits',
-    compliance: 'No financial planning advice. Stick to VA benefits education only.'
+    behavior: 'Explain tax-free disability payments, back pay, and offsets.',
+    compliance: 'No financial advice. VA compensation focus only.',
+    icon: <DollarSign size={20} />,
+    color: 'emerald',
+    triggers: ['pay', 'compensation', 'money', 'budget', 'back pay', 'offset', 'financial'],
+    examples: [
+      'When will I get my disability pay?',
+      'How much back pay will I receive?',
+      'Is VA compensation taxable?'
+    ]
   },
   {
     value: 'housing_mode',
     label: 'Housing & VA Home Loans',
-    description: 'Walks through VA loan eligibility, COE, renting vs buying, and moving checklists.',
+    description: 'Explains VA loan process and housing considerations.',
     tone: 'Straightforward, protective',
-    behavior: 'Housing and VA loan guidance',
-    compliance: 'No mortgage or legal advice. Only explain VA benefits and procedures.'
+    behavior: 'Walk through eligibility, COE process, and key terms.',
+    compliance: 'Follow VA loan policies. No lender or real estate advice.',
+    icon: <Home size={20} />,
+    color: 'teal',
+    triggers: ['home loan', 'housing', 'mortgage', 'COE', 'buy house', 'VA loan'],
+    examples: [
+      'How do I get a VA home loan?',
+      'What are the benefits of a VA loan?',
+      'Do I need a down payment?'
+    ]
   },
   {
     value: 'survivor_mode',
     label: 'Survivor & Dependent Benefits',
-    description: 'Explains DIC, CHAMPVA, dependents\' claims, and accrued benefits.',
+    description: 'Supports dependents and survivors with DIC and related benefits.',
     tone: 'Compassionate, respectful',
-    behavior: 'Survivor and dependent benefits support',
-    compliance: 'Follow 38 CFR Part 3 and M21-1 Part IV. Avoid legal conclusions—focus on eligibility and forms.'
+    behavior: 'Explain DIC, CHAMPVA, and accrued benefits.',
+    compliance: '38 CFR Part 3, M21-1 Part IV. No legal outcome prediction.',
+    icon: <UserHeart size={20} />,
+    color: 'rose',
+    triggers: ['DIC', 'survivor', 'dependent', 'CHAMPVA', 'widow', 'spouse', 'children'],
+    examples: [
+      'What benefits are available for survivors?',
+      'How do I apply for DIC?',
+      'What is CHAMPVA coverage?'
+    ]
   },
   {
     value: 'training_mode',
     label: 'VSO Training Assistant',
-    description: 'Provides answers for staff or trainee VSOs using VSO-style explanations.',
+    description: 'Educates both veterans and staff on VA claims, benefits, and self-advocacy.',
     tone: 'Instructional, formal',
-    behavior: 'VSO training and education',
-    compliance: 'Used only for internal training purposes. Teach procedures, not legal advice.'
+    behavior: 'Teach veterans, military members, and VSO trainees how VA claims and benefits work.',
+    compliance: 'For educational use only. Follow procedural accuracy.',
+    icon: <School size={20} />,
+    color: 'violet',
+    triggers: ['train', 'teach', 'learn', 'how does', 'explain', 'VSO', 'course'],
+    examples: [
+      'Teach me how claims work',
+      'Can I train to help other veterans?',
+      'How do I become a VSO?'
+    ]
   },
   {
     value: 'general',
     label: 'General Support',
     description: 'Default mode for general veteran assistance and support.',
     tone: 'Professional, helpful',
-    behavior: 'General veteran support and guidance',
-    compliance: 'Follow all VA guidelines and refer to appropriate specialists when needed.'
+    behavior: 'General veteran support and guidance.',
+    compliance: 'Follow all VA guidelines and refer to appropriate specialists when needed.',
+    icon: <HelpCircle size={20} />,
+    color: 'gray',
+    triggers: ['help', 'support', 'question', 'general'],
+    examples: [
+      'I need help with VA benefits',
+      'Where do I start?',
+      'What services are available?'
+    ]
   }
 ];
 
@@ -598,6 +704,7 @@ const AIBehaviorEditor: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string>('');
   const [expandedModes, setExpandedModes] = useState<Set<string>>(new Set());
+  const [showModeDetails, setShowModeDetails] = useState(false);
 
   // Check if user is admin
   const isAdmin = user?.email?.endsWith('@forwardassisthq.com');
@@ -654,7 +761,9 @@ const AIBehaviorEditor: React.FC = () => {
           tone: mode.tone,
           behavior: mode.behavior,
           auto_generated: true,
-          created_by: 'system'
+          created_by: 'system',
+          triggers: mode.triggers,
+          examples: mode.examples
         },
         compliance_notes: [mode.compliance]
       }));
@@ -768,6 +877,23 @@ const AIBehaviorEditor: React.FC = () => {
     return CHAT_MODES.find(m => m.value === mode);
   };
 
+  const getColorClasses = (color: string) => {
+    const colorMap: Record<string, string> = {
+      blue: 'text-blue-600 bg-blue-50 border-blue-200',
+      green: 'text-green-600 bg-green-50 border-green-200',
+      purple: 'text-purple-600 bg-purple-50 border-purple-200',
+      pink: 'text-pink-600 bg-pink-50 border-pink-200',
+      indigo: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+      orange: 'text-orange-600 bg-orange-50 border-orange-200',
+      emerald: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      teal: 'text-teal-600 bg-teal-50 border-teal-200',
+      rose: 'text-rose-600 bg-rose-50 border-rose-200',
+      violet: 'text-violet-600 bg-violet-50 border-violet-200',
+      gray: 'text-gray-600 bg-gray-50 border-gray-200'
+    };
+    return colorMap[color] || colorMap.gray;
+  };
+
   if (!isAdmin) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -789,13 +915,24 @@ const AIBehaviorEditor: React.FC = () => {
       <div className="mb-8 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">AI Behavior & System Message Editor</h2>
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Brain size={28} className="text-blue-600" />
+              AI Behavior & System Message Editor
+            </h2>
             <p className="text-gray-600 mt-1">
-              Configure how ForwardOps AI behaves and responds across different chat modes
+              Configure how ForwardOps AI behaves and responds across different VSO-aligned chat modes
             </p>
           </div>
           
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowModeDetails(!showModeDetails)}
+              leftIcon={showModeDetails ? <EyeOff size={16} /> : <Eye size={16} />}
+            >
+              {showModeDetails ? 'Hide' : 'Show'} Mode Details
+            </Button>
+            
             <Button
               variant="outline"
               onClick={loadSystemMessages}
@@ -808,7 +945,7 @@ const AIBehaviorEditor: React.FC = () => {
             <Button
               variant="secondary"
               onClick={createDefaultMessages}
-              leftIcon={<Plus size={16} />}
+              leftIcon={<Zap size={16} />}
               disabled={loading}
             >
               Create Defaults
@@ -825,6 +962,47 @@ const AIBehaviorEditor: React.FC = () => {
         </div>
       </div>
 
+      {/* Mode Switching Logic Info */}
+      {showModeDetails && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6 flex-shrink-0">
+          <div className="flex items-start gap-3">
+            <Info size={24} className="text-blue-600 mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-3">Chat Mode Switching Logic</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <h4 className="font-medium text-blue-800 mb-2">Default Behavior</h4>
+                  <p className="text-blue-700 mb-3">All chats begin in <strong>claims_mode</strong> unless overridden by admin or triggered by user input.</p>
+                  
+                  <h4 className="font-medium text-blue-800 mb-2">Admin Override</h4>
+                  <p className="text-blue-700">Admins can manually set modes using:</p>
+                  <code className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">set_mode('education_mode')</code>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-blue-800 mb-2">Automatic Triggers</h4>
+                  <p className="text-blue-700 mb-2">AI detects keywords to switch modes:</p>
+                  <ul className="text-blue-700 text-xs space-y-1">
+                    <li>• "How do I use the GI Bill?" → <strong>education_mode</strong></li>
+                    <li>• "What's this decision letter mean?" → <strong>document_mode</strong></li>
+                    <li>• "Can I train to help veterans?" → <strong>training_mode</strong></li>
+                    <li>• "I need help with PTSD" → <strong>mental_health_mode</strong></li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  <strong>Fallback:</strong> If multiple modes apply, the assistant asks for clarification: 
+                  "Sounds like you're asking about both education and benefits. Want me to walk you through the GI Bill or your VA claim first?"
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2 flex-shrink-0">
           <AlertCircle size={20} />
@@ -833,7 +1011,7 @@ const AIBehaviorEditor: React.FC = () => {
       )}
 
       {/* Chat Modes Overview */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden flex-1">
+      <div className="bg-white rounded-lg shadow-sm border flex-1 min-h-0 flex flex-col">
         <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -846,47 +1024,67 @@ const AIBehaviorEditor: React.FC = () => {
                 const messages = getMessagesForMode(mode.value);
                 const isExpanded = expandedModes.has(mode.value);
                 const activeMessage = messages.find(msg => msg.is_active);
+                const colorClasses = getColorClasses(mode.color);
                 
                 return (
                   <div key={mode.value} className="p-6">
                     {/* Mode Header */}
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleModeExpansion(mode.value)}
-                          className="flex items-center gap-2 text-left"
-                        >
-                          {isExpanded ? (
-                            <EyeOff size={20} className="text-gray-400" />
-                          ) : (
-                            <Eye size={20} className="text-gray-400" />
-                          )}
-                          <div>
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-lg border ${colorClasses}`}>
+                          {mode.icon}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-semibold text-gray-900">
                               {mode.label}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                              {mode.description}
-                            </p>
+                            <button
+                              onClick={() => toggleModeExpansion(mode.value)}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
+                              {isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                           </div>
-                        </button>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {mode.description}
+                          </p>
+                          
+                          {/* Trigger Keywords */}
+                          <div className="flex flex-wrap gap-1">
+                            {mode.triggers.slice(0, 4).map(trigger => (
+                              <span
+                                key={trigger}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                              >
+                                {trigger}
+                              </span>
+                            ))}
+                            {mode.triggers.length > 4 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                +{mode.triggers.length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="text-right">
                           {activeMessage ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 mb-1">
                               <CheckCircle size={16} className="text-green-600" />
-                              <span className="text-sm text-green-600">Active</span>
+                              <span className="text-sm text-green-600 font-medium">Active</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 mb-1">
                               <AlertCircle size={16} className="text-yellow-600" />
-                              <span className="text-sm text-yellow-600">No Active Message</span>
+                              <span className="text-sm text-yellow-600 font-medium">No Active Message</span>
                             </div>
                           )}
-                          <span className="text-sm text-gray-500">
-                            ({messages.length} message{messages.length !== 1 ? 's' : ''})
+                          <span className="text-xs text-gray-500">
+                            {messages.length} message{messages.length !== 1 ? 's' : ''}
                           </span>
                         </div>
                         
@@ -907,18 +1105,42 @@ const AIBehaviorEditor: React.FC = () => {
                     {/* Mode Details */}
                     {isExpanded && (
                       <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
                           <div>
-                            <span className="font-medium text-gray-700">Tone:</span>
+                            <span className="font-medium text-gray-700 flex items-center gap-1">
+                              <MessageSquare size={14} />
+                              Tone:
+                            </span>
                             <p className="text-gray-600 mt-1">{mode.tone}</p>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-700">Behavior:</span>
+                            <span className="font-medium text-gray-700 flex items-center gap-1">
+                              <Target size={14} />
+                              Behavior:
+                            </span>
                             <p className="text-gray-600 mt-1">{mode.behavior}</p>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-700">Compliance:</span>
+                            <span className="font-medium text-gray-700 flex items-center gap-1">
+                              <Shield size={14} />
+                              Compliance:
+                            </span>
                             <p className="text-gray-600 mt-1">{mode.compliance}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Example Queries */}
+                        <div>
+                          <span className="font-medium text-gray-700 text-sm mb-2 block">Example User Queries:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {mode.examples.map((example, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+                              >
+                                "{example}"
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -981,6 +1203,23 @@ const AIBehaviorEditor: React.FC = () => {
                               <p className="text-sm text-gray-600 mb-3">
                                 {message.description}
                               </p>
+                            )}
+                            
+                            {/* Compliance Notes */}
+                            {message.compliance_notes && message.compliance_notes.length > 0 && (
+                              <div className="mb-3">
+                                <span className="text-xs font-medium text-gray-700">Compliance:</span>
+                                <div className="mt-1">
+                                  {message.compliance_notes.map((note, index) => (
+                                    <span
+                                      key={index}
+                                      className="inline-block text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded mr-2 mb-1"
+                                    >
+                                      {note}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                             
                             <div className="text-sm text-gray-500">
@@ -1084,10 +1323,15 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
 
   const selectedModeInfo = CHAT_MODES.find(m => m.value === formData.mode);
 
+  const loadDefaultContent = () => {
+    const defaultContent = DEFAULT_SYSTEM_MESSAGES[formData.mode] || DEFAULT_SYSTEM_MESSAGES.general;
+    setFormData(prev => ({ ...prev, content: defaultContent }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full h-[90vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-900">
             {message ? 'Edit System Message' : 'Create System Message'}
           </h3>
@@ -1099,145 +1343,173 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chat Mode
+                  </label>
+                  <select
+                    value={formData.mode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, mode: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    {CHAT_MODES.map(mode => (
+                      <option key={mode.value} value={mode.value}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Mode Information */}
+              {selectedModeInfo && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg border ${getColorClasses(selectedModeInfo.color)}`}>
+                      {selectedModeInfo.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        {selectedModeInfo.label} Mode Guidelines
+                      </h4>
+                      <div className="text-sm text-blue-800 space-y-2">
+                        <p><strong>Tone:</strong> {selectedModeInfo.tone}</p>
+                        <p><strong>Behavior:</strong> {selectedModeInfo.behavior}</p>
+                        <p><strong>Compliance:</strong> {selectedModeInfo.compliance}</p>
+                        
+                        <div>
+                          <strong>Trigger Keywords:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedModeInfo.triggers.map(trigger => (
+                              <span
+                                key={trigger}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700"
+                              >
+                                {trigger}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={loadDefaultContent}
+                      leftIcon={<FileText size={16} />}
+                    >
+                      Load Default
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message Name
+                  Description
                 </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Brief description of this system message..."
+                />
+              </div>
+
+              {/* System Message Content */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  System Message Content
+                </label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                  rows={16}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                  placeholder="Enter the system message that will guide the AI's behavior..."
                   required
                 />
               </div>
-              
+
+              {/* Compliance Notes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Chat Mode
+                  Compliance Notes
                 </label>
-                <select
-                  value={formData.mode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, mode: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  {CHAT_MODES.map(mode => (
-                    <option key={mode.value} value={mode.value}>
-                      {mode.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Mode Information */}
-            {selectedModeInfo && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <Info size={20} className="text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-900 mb-2">
-                      {selectedModeInfo.label} Mode Guidelines
-                    </h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p><strong>Tone:</strong> {selectedModeInfo.tone}</p>
-                      <p><strong>Behavior:</strong> {selectedModeInfo.behavior}</p>
-                      <p><strong>Compliance:</strong> {selectedModeInfo.compliance}</p>
+                <div className="space-y-2">
+                  {formData.compliance_notes.map((note, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={note}
+                        onChange={(e) => updateComplianceNote(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Compliance requirement or note..."
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeComplianceNote(index)}
+                        className="text-red-600"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
                     </div>
-                  </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addComplianceNote}
+                    leftIcon={<Plus size={16} />}
+                  >
+                    Add Compliance Note
+                  </Button>
                 </div>
               </div>
-            )}
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Brief description of this system message..."
-              />
-            </div>
-
-            {/* System Message Content */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                System Message Content
-              </label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                rows={12}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
-                placeholder="Enter the system message that will guide the AI's behavior..."
-                required
-              />
-            </div>
-
-            {/* Compliance Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Compliance Notes
-              </label>
-              <div className="space-y-2">
-                {formData.compliance_notes.map((note, index) => (
-                  <div key={index} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={note}
-                      onChange={(e) => updateComplianceNote(index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Compliance requirement or note..."
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeComplianceNote(index)}
-                      className="text-red-600"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addComplianceNote}
-                  leftIcon={<Plus size={16} />}
-                >
-                  Add Compliance Note
-                </Button>
+              {/* Active Status */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                  Set as active message for this mode
+                </label>
               </div>
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={formData.is_active}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
-                Set as active message for this mode
-              </label>
             </div>
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-6 border-t mt-6">
+          <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50 flex-shrink-0">
             <Button
               type="button"
               variant="ghost"
@@ -1258,6 +1530,24 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
       </div>
     </div>
   );
+};
+
+// Helper function for color classes (moved outside component to avoid recreation)
+const getColorClasses = (color: string) => {
+  const colorMap: Record<string, string> = {
+    blue: 'text-blue-600 bg-blue-50 border-blue-200',
+    green: 'text-green-600 bg-green-50 border-green-200',
+    purple: 'text-purple-600 bg-purple-50 border-purple-200',
+    pink: 'text-pink-600 bg-pink-50 border-pink-200',
+    indigo: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+    orange: 'text-orange-600 bg-orange-50 border-orange-200',
+    emerald: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    teal: 'text-teal-600 bg-teal-50 border-teal-200',
+    rose: 'text-rose-600 bg-rose-50 border-rose-200',
+    violet: 'text-violet-600 bg-violet-50 border-violet-200',
+    gray: 'text-gray-600 bg-gray-50 border-gray-200'
+  };
+  return colorMap[color] || colorMap.gray;
 };
 
 export default AIBehaviorEditor;
