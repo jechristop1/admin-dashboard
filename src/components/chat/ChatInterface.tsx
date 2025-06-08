@@ -4,7 +4,7 @@ import ChatInput from './ChatInput';
 import { Message } from '../../types';
 import { Bot, MessageSquare, Download, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useChatStore, ASSISTANT_MODES } from '../../store/chatStore';
+import { useChatStore, ASSISTANT_MODES, AssistantMode } from '../../store/chatStore';
 import Button from '../ui/Button';
 import { cleanMarkdown, formatMessages, generateTranscriptTitle, generateFooter, formatForPDF } from '../../utils/exportUtils';
 
@@ -28,8 +28,8 @@ function ChatInterface() {
   const displayMessages = messages.filter(msg => msg.role !== 'system');
   const currentModeInfo = ASSISTANT_MODES[currentMode];
 
-  // Suggestion to mode mapping
-  const suggestionModeMap: Record<string, string> = {
+  // Updated suggestion to mode mapping with exact text matching
+  const suggestionModeMap: Record<string, AssistantMode> = {
     "File a VA claim": "claims_mode",
     "Read my VA Letter": "document_mode", 
     "Get Help with Mental Health": "mental_health_mode",
@@ -402,10 +402,19 @@ When answering questions:
   };
 
   const handleSuggestionClick = async (suggestion: string) => {
+    console.log('Suggestion clicked:', suggestion);
+    console.log('Current mode before switch:', currentMode);
+    
     // Check if this suggestion should trigger a mode switch
     const targetMode = suggestionModeMap[suggestion];
+    console.log('Target mode for suggestion:', targetMode);
+    
     if (targetMode && targetMode !== currentMode) {
-      await switchMode(targetMode as any);
+      console.log('Switching mode from', currentMode, 'to', targetMode);
+      await switchMode(targetMode);
+      console.log('Mode switched successfully');
+    } else {
+      console.log('No mode switch needed or target mode not found');
     }
     
     // Send the message
@@ -419,7 +428,7 @@ When answering questions:
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-end">
             {displayMessages.length > 0 && (
-              <div className="relative\" ref={downloadMenuRef}>
+              <div className="relative" ref={downloadMenuRef}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -502,7 +511,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
