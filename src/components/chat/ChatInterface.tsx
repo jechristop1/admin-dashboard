@@ -386,23 +386,87 @@ When answering questions:
   
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="flex-none border-b border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-4 relative">
-          <div className="flex flex-col items-center justify-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg mb-2">
-              <Bot size={24} className="text-[#FFBA08]" />
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto">
+        {displayMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
+              <Bot size={40} className="text-[#FFBA08]" />
             </div>
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
-                ForwardOps AI
-              </h1>
-              <p className="text-sm text-gray-600 font-medium">Your virtual Veterans Service Officer</p>
+            <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
+              ForwardOps AI
+            </h2>
+            <p className="text-sm text-gray-600 font-medium mb-8">Your virtual Veterans Service Officer</p>
+            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+              I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
+            </p>
+            
+            {/* Export button for when there are messages */}
+            {displayMessages.length > 0 && (
+              <div className="absolute top-6 right-6">
+                <div className="relative" ref={downloadMenuRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                    className="text-gray-600 hover:bg-gray-100 gap-2"
+                  >
+                    <Download size={16} />
+                    Export
+                    <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                  </Button>
+                  
+                  {showDownloadMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleDownload('txt')}
+                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Download size={16} />
+                          Download as TXT
+                        </button>
+                        <button
+                          onClick={() => handleDownload('pdf')}
+                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Download size={16} />
+                          Download as PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-4xl">
+              {[
+                "File a VA claim",
+                "Read my VA Letter",
+                "Get Help with Mental Health",
+                "Learn About the GI Bill",
+                "Get Job Help",
+                "Understand my VA Pay",
+                "VA Home Loans",
+                "Support for Dependents or Survivors",
+                "Transition to Civilian Life",
+                "Train me to Understand VA Claims"
+              ].map((suggestion, i) => (
+                <button
+                  key={i}
+                  className="bg-white hover:bg-gray-50 text-left p-4 rounded-lg border border-gray-200 transition-colors duration-200 text-gray-800 hover:border-[#0A2463] hover:shadow-md"
+                  onClick={() => handleSendMessage(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
             </div>
           </div>
-          
-          {displayMessages.length > 0 && (
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+        ) : (
+          <>
+            {/* Export button for when there are messages */}
+            <div className="absolute top-6 right-6 z-10">
               <div className="relative" ref={downloadMenuRef}>
                 <Button
                   variant="ghost"
@@ -437,45 +501,10 @@ When answering questions:
                 )}
               </div>
             </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        {displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <p className="text-gray-600 mb-8 text-lg leading-relaxed pt-8">
-              I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-4xl">
-              {[
-                "File a VA claim",
-                "Read my VA Letter",
-                "Get Help with Mental Health",
-                "Learn About the GI Bill",
-                "Get Job Help",
-                "Understand my VA Pay",
-                "VA Home Loans",
-                "Support for Dependents or Survivors",
-                "Transition to Civilian Life",
-                "Train me to Understand VA Claims"
-              ].map((suggestion, i) => (
-                <button
-                  key={i}
-                  className="bg-white hover:bg-gray-50 text-left p-4 rounded-lg border border-gray-200 transition-colors duration-200 text-gray-800 hover:border-[#0A2463] hover:shadow-md"
-                  onClick={() => handleSendMessage(suggestion)}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
+            
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
