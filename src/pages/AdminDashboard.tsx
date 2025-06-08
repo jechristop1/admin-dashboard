@@ -3,6 +3,7 @@ import Layout from '../components/layout/Layout';
 import Button from '../components/ui/Button';
 import ChatLogViewer from '../components/admin/ChatLogViewer';
 import AIKnowledgeBaseManager from '../components/admin/AIKnowledgeBaseManager';
+import AIBehaviorEditor from '../components/admin/AIBehaviorEditor';
 import { 
   FileText, 
   User, 
@@ -18,7 +19,8 @@ import {
   MessageSquare,
   BarChart3,
   Database,
-  Brain
+  Brain,
+  Settings
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
@@ -40,7 +42,7 @@ interface AdminDocument {
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'documents' | 'chats' | 'knowledge'>('documents');
+  const [activeTab, setActiveTab] = useState<'documents' | 'chats' | 'knowledge' | 'behavior'>('documents');
   const [documents, setDocuments] = useState<AdminDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -312,8 +314,22 @@ const AdminDashboard: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Brain size={16} />
+                    <Database size={16} />
                     AI Knowledge Base
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('behavior')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'behavior'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Brain size={16} />
+                    AI Behavior Editor
                   </div>
                 </button>
               </nav>
@@ -644,9 +660,13 @@ const AdminDashboard: React.FC = () => {
               <div className="h-full overflow-hidden">
                 <ChatLogViewer />
               </div>
-            ) : (
+            ) : activeTab === 'knowledge' ? (
               <div className="h-full overflow-hidden">
                 <AIKnowledgeBaseManager />
+              </div>
+            ) : (
+              <div className="h-full overflow-hidden">
+                <AIBehaviorEditor />
               </div>
             )}
           </div>
