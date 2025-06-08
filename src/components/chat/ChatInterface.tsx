@@ -388,58 +388,45 @@ When answering questions:
   
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Header with Assistant Mode Display */}
+      {/* Simple header with export button only */}
       <div className="flex-none border-b border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left side - empty for balance */}
-            <div className="flex-1"></div>
-            
-            {/* Center - Assistant Mode Display */}
-            <div className="flex-1 text-center">
-              <div className="text-sm font-semibold text-gray-900">
-                Current Assistant Mode: {currentModeInfo.title}
-              </div>
-            </div>
-            
-            {/* Right side - Export button */}
-            <div className="flex-1 flex justify-end">
-              {displayMessages.length > 0 && (
-                <div className="relative\" ref={downloadMenuRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                    className="text-gray-600 hover:bg-gray-100 gap-2"
-                  >
-                    <Download size={16} />
-                    Export
-                    <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
-                  </Button>
-                  
-                  {showDownloadMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                      <div className="py-1">
-                        <button
-                          onClick={() => handleDownload('txt')}
-                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Download size={16} />
-                          Download as TXT
-                        </button>
-                        <button
-                          onClick={() => handleDownload('pdf')}
-                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Download size={16} />
-                          Download as PDF
-                        </button>
-                      </div>
+          <div className="flex items-center justify-end">
+            {displayMessages.length > 0 && (
+              <div className="relative" ref={downloadMenuRef}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  className="text-gray-600 hover:bg-gray-100 gap-2"
+                >
+                  <Download size={16} />
+                  Export
+                  <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                </Button>
+                
+                {showDownloadMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleDownload('txt')}
+                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download as TXT
+                      </button>
+                      <button
+                        onClick={() => handleDownload('pdf')}
+                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download as PDF
+                      </button>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -489,7 +476,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
