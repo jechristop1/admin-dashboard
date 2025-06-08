@@ -390,13 +390,16 @@ When answering questions:
       <div className="flex-1 overflow-y-auto">
         {displayMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
-              <Bot size={40} className="text-[#FFBA08]" />
+            {/* Bot icon and title in a flex row */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-2xl flex items-center justify-center shadow-xl">
+                <Bot size={40} className="text-[#FFBA08]" />
+              </div>
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
+                ForwardOps AI
+              </h2>
             </div>
-            <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
-              ForwardOps AI
-            </h2>
-            <p className="text-sm text-gray-600 font-medium mb-8">Your virtual Veterans Service Officer</p>
+            
             <p className="text-gray-600 mb-8 text-lg leading-relaxed">
               I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
             </p>
