@@ -17,7 +17,8 @@ function ChatInterface() {
     currentSessionId,
     createNewSession,
     clearMessages,
-    currentMode
+    currentMode,
+    switchMode
   } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -26,6 +27,20 @@ function ChatInterface() {
   
   const displayMessages = messages.filter(msg => msg.role !== 'system');
   const currentModeInfo = ASSISTANT_MODES[currentMode];
+
+  // Suggestion to mode mapping
+  const suggestionModeMap: Record<string, string> = {
+    "File a VA claim": "claims_mode",
+    "Read my VA Letter": "document_mode", 
+    "Get Help with Mental Health": "mental_health_mode",
+    "Learn About the GI Bill": "education_mode",
+    "Get Job Help": "career_mode",
+    "Understand my VA Pay": "finance_mode",
+    "VA Home Loans": "housing_mode",
+    "Support for Dependents or Survivors": "survivor_mode",
+    "Transition to Civilian Life": "transition_mode",
+    "Train me to Understand VA Claims": "training_mode"
+  };
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -385,6 +400,17 @@ When answering questions:
       setStreamingMessageId(null);
     }
   };
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    // Check if this suggestion should trigger a mode switch
+    const targetMode = suggestionModeMap[suggestion];
+    if (targetMode && targetMode !== currentMode) {
+      await switchMode(targetMode as any);
+    }
+    
+    // Send the message
+    await handleSendMessage(suggestion);
+  };
   
   return (
     <div className="flex flex-col h-full bg-white">
@@ -393,7 +419,7 @@ When answering questions:
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-end">
             {displayMessages.length > 0 && (
-              <div className="relative\" ref={downloadMenuRef}>
+              <div className="relative" ref={downloadMenuRef}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -465,7 +491,7 @@ When answering questions:
                 <button
                   key={i}
                   className="bg-white hover:bg-gray-50 text-left p-4 rounded-lg border border-gray-200 transition-colors duration-200 text-gray-800 hover:border-[#0A2463] hover:shadow-md"
-                  onClick={() => handleSendMessage(suggestion)}
+                  onClick={() => handleSuggestionClick(suggestion)}
                 >
                   {suggestion}
                 </button>
@@ -476,7 +502,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">

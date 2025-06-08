@@ -39,11 +39,12 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
         
-        {/* Center - Assistant Mode Pill Badge */}
+        {/* Center - Assistant Mode Pill Badge - Smaller and More Subdued */}
         <div className="flex items-center justify-center">
-          <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4 py-1 text-sm font-medium">
-            <span className="text-lg">{currentIcon}</span>
-            <span className="text-gray-800">{currentModeInfo.title}</span>
+          <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-xs font-medium text-white/90">
+            <span className="text-sm opacity-75">Mode:</span>
+            <span className="text-sm">{currentIcon}</span>
+            <span className="text-white/80">{currentModeInfo.title}</span>
           </div>
         </div>
         
