@@ -391,9 +391,9 @@ When answering questions:
         {displayMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center">
             {/* Bot icon and title in a flex row */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-2xl flex items-center justify-center shadow-xl">
-                <Bot size={40} className="text-[#FFBA08]" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
+                <Bot size={24} className="text-[#FFBA08]" />
               </div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
                 ForwardOps AI
