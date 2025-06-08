@@ -388,58 +388,56 @@ When answering questions:
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex-none border-b border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
-                <Bot size={24} className="text-[#FFBA08]" />
-              </div>
-              <div className="text-center">
-                <h1 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
-                  ForwardOps AI
-                </h1>
-                <p className="text-sm text-gray-600 font-medium">Your virtual Veterans Service Officer</p>
+        <div className="max-w-4xl mx-auto px-4 py-4 relative">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
+              <Bot size={24} className="text-[#FFBA08]" />
+            </div>
+            <div className="text-left">
+              <h1 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
+                ForwardOps AI
+              </h1>
+              <p className="text-sm text-gray-600 font-medium">Your virtual Veterans Service Officer</p>
+            </div>
+          </div>
+          
+          {displayMessages.length > 0 && (
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <div className="relative" ref={downloadMenuRef}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  className="text-gray-600 hover:bg-gray-100 gap-2"
+                >
+                  <Download size={16} />
+                  Export
+                  <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
+                </Button>
+                
+                {showDownloadMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleDownload('txt')}
+                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download as TXT
+                      </button>
+                      <button
+                        onClick={() => handleDownload('pdf')}
+                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download as PDF
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            
-            {displayMessages.length > 0 && (
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                <div className="relative" ref={downloadMenuRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                    className="text-gray-600 hover:bg-gray-100 gap-2"
-                  >
-                    <Download size={16} />
-                    Export
-                    <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
-                  </Button>
-                  
-                  {showDownloadMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                      <div className="py-1">
-                        <button
-                          onClick={() => handleDownload('txt')}
-                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Download size={16} />
-                          Download as TXT
-                        </button>
-                        <button
-                          onClick={() => handleDownload('pdf')}
-                          className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Download size={16} />
-                          Download as PDF
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
       
@@ -477,7 +475,7 @@ When answering questions:
           <>
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
-                <div key="thinking\" className="w-full bg-gray-50">
+                <div key="thinking" className="w-full bg-gray-50">
                   <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0">
