@@ -456,10 +456,16 @@ When answering questions:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
               {[
-                "Help me file a VA claim",
-                "What benefits am I eligible for?",
-                "How do disability ratings work?",
-                "I need help with my C&P exam"
+                "File a VA claim",
+                "Read my VA Letter",
+                "Get Help with Mental Health",
+                "Learn About the GI Bill",
+                "Get Job Help",
+                "Understand my VA Pay",
+                "VA Home Loans",
+                "Support for Dependents or Surviors",
+                "Transition to Civilian Life",
+                "Train me to Understand VA Claims"
               ].map((suggestion, i) => (
                 <button
                   key={i}
