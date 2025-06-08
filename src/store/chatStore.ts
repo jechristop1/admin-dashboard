@@ -181,7 +181,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearMessages: () => set((state) => ({
     messages: [state.messages[0]], // Keep the system prompt
     currentSessionId: null,
-    currentMode: 'general_support', // Reset to default mode
+    // DON'T reset mode when clearing messages - keep current mode
   })),
 
   setLoading: (loading) => set({ isLoading: loading }),
@@ -204,7 +204,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           timestamp: new Date(msg.created_at),
         })),
         currentSessionId: sessionId,
-        currentMode: 'general_support', // Reset to default when loading session
+        // DON'T reset mode when loading session - keep current mode
       });
     } catch (error) {
       console.error('Error loading session:', error);
@@ -231,7 +231,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       set({
         currentSessionId: session.id,
-        currentMode: 'general_support', // Reset to default mode
+        // DON'T reset mode when creating new session - keep current mode
         messages: [
           {
             id: generateId(),
@@ -252,8 +252,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   switchMode: async (mode: AssistantMode) => {
     const currentMode = get().currentMode;
     
-    if (currentMode === mode) return; // No change needed
+    console.log('switchMode called:', { from: currentMode, to: mode });
     
+    if (currentMode === mode) {
+      console.log('Mode already set, no change needed');
+      return; // No change needed
+    }
+    
+    console.log('Setting new mode:', mode);
     set({ currentMode: mode });
     
     // Add system message about mode switch
@@ -265,6 +271,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       timestamp: new Date(),
     };
     
+    console.log('Adding system message for mode switch');
     await get().addMessage(systemMessage);
+    
+    console.log('Mode switch complete, new mode:', get().currentMode);
   },
 }));
