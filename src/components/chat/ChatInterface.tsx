@@ -4,7 +4,7 @@ import ChatInput from './ChatInput';
 import { Message } from '../../types';
 import { Bot, MessageSquare, Download, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useChatStore } from '../../store/chatStore';
+import { useChatStore, ASSISTANT_MODES } from '../../store/chatStore';
 import Button from '../ui/Button';
 import { cleanMarkdown, formatMessages, generateTranscriptTitle, generateFooter, formatForPDF } from '../../utils/exportUtils';
 
@@ -16,7 +16,8 @@ function ChatInterface() {
     setLoading, 
     currentSessionId,
     createNewSession,
-    clearMessages 
+    clearMessages,
+    currentMode
   } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -24,6 +25,7 @@ function ChatInterface() {
   const downloadMenuRef = useRef<HTMLDivElement>(null);
   
   const displayMessages = messages.filter(msg => msg.role !== 'system');
+  const currentModeInfo = ASSISTANT_MODES[currentMode];
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -386,27 +388,23 @@ When answering questions:
   
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        {displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            {/* Bot icon and title in a flex row */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
-                <Bot size={24} className="text-[#FFBA08]" />
+      {/* Header with Assistant Mode Display */}
+      <div className="flex-none border-b border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left side - empty for balance */}
+            <div className="flex-1"></div>
+            
+            {/* Center - Assistant Mode Display */}
+            <div className="flex-1 text-center">
+              <div className="text-sm font-semibold text-gray-900">
+                Current Assistant Mode: {currentModeInfo.title}
               </div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
-                ForwardOps AI
-              </h2>
             </div>
             
-            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-              I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
-            </p>
-            
-            {/* Export button for when there are messages */}
-            {displayMessages.length > 0 && (
-              <div className="absolute top-6 right-6">
+            {/* Right side - Export button */}
+            <div className="flex-1 flex justify-end">
+              {displayMessages.length > 0 && (
                 <div className="relative" ref={downloadMenuRef}>
                   <Button
                     variant="ghost"
@@ -440,8 +438,29 @@ When answering questions:
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto">
+        {displayMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+            {/* Bot icon and title in a flex row */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
+                <Bot size={24} className="text-[#FFBA08]" />
               </div>
-            )}
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
+                ForwardOps AI
+              </h2>
+            </div>
+            
+            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+              I'm your dedicated AI assistant for navigating VA claims, benefits, and transition support. How can I help you today?
+            </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-4xl">
               {[
@@ -468,43 +487,6 @@ When answering questions:
           </div>
         ) : (
           <>
-            {/* Export button for when there are messages */}
-            <div className="absolute top-6 right-6 z-10">
-              <div className="relative" ref={downloadMenuRef}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                  className="text-gray-600 hover:bg-gray-100 gap-2"
-                >
-                  <Download size={16} />
-                  Export
-                  <ChevronDown size={16} className={`transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} />
-                </Button>
-                
-                {showDownloadMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleDownload('txt')}
-                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <Download size={16} />
-                        Download as TXT
-                      </button>
-                      <button
-                        onClick={() => handleDownload('pdf')}
-                        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <Download size={16} />
-                        Download as PDF
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
             {displayMessages.map((message: Message) => (
               message.id === 'thinking' ? (
                 <div key="thinking" className="w-full bg-gray-50">

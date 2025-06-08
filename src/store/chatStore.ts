@@ -27,16 +27,79 @@ const SYSTEM_PROMPT =
    - Explain any technical terms
    - Suggest next steps or actions needed`;
 
+// Assistant mode configuration
+export const ASSISTANT_MODES = {
+  general_support: {
+    id: 'general_support',
+    title: 'General Support Assistant',
+    description: 'Provides general veteran support and guidance across all areas'
+  },
+  claims_mode: {
+    id: 'claims_mode',
+    title: 'Claims Assistant',
+    description: 'Step-by-step guidance through VA disability claims'
+  },
+  transition_mode: {
+    id: 'transition_mode',
+    title: 'Transition & TAP Guidance',
+    description: 'Supports veterans during the military-to-civilian transition'
+  },
+  document_mode: {
+    id: 'document_mode',
+    title: 'Document Review Assistant',
+    description: 'Summarizes and interprets uploaded VA documents'
+  },
+  mental_health_mode: {
+    id: 'mental_health_mode',
+    title: 'Mental Health Support',
+    description: 'Offers trauma-informed peer support and mental health claims guidance'
+  },
+  education_mode: {
+    id: 'education_mode',
+    title: 'Education & GI Bill Support',
+    description: 'Explains how to access and use VA education benefits'
+  },
+  career_mode: {
+    id: 'career_mode',
+    title: 'Career & Job Readiness',
+    description: 'Helps veterans prepare for employment'
+  },
+  finance_mode: {
+    id: 'finance_mode',
+    title: 'Financial Planning',
+    description: 'Helps veterans understand disability compensation and budgeting'
+  },
+  housing_mode: {
+    id: 'housing_mode',
+    title: 'Housing & VA Home Loans',
+    description: 'Explains VA loan process and housing considerations'
+  },
+  survivor_mode: {
+    id: 'survivor_mode',
+    title: 'Survivor & Dependent Benefits',
+    description: 'Supports dependents and survivors with DIC and related benefits'
+  },
+  training_mode: {
+    id: 'training_mode',
+    title: 'VA Claims Training Assistant',
+    description: 'Educates both veterans and staff on VA claims, benefits, and self-advocacy'
+  }
+} as const;
+
+export type AssistantMode = keyof typeof ASSISTANT_MODES;
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
   currentSessionId: string | null;
+  currentMode: AssistantMode;
   addMessage: (message: Message) => Promise<void>;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
   loadSession: (sessionId: string) => Promise<void>;
   createNewSession: () => Promise<string>;
   updateSessionTitle: (sessionId: string, messages: Message[]) => Promise<void>;
+  switchMode: (mode: AssistantMode) => Promise<void>;
 }
 
 // Generate a unique ID for messages
@@ -55,6 +118,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ],
   isLoading: false,
   currentSessionId: null,
+  currentMode: 'general_support', // Default mode
 
   addMessage: async (message) => {
     const { currentSessionId, messages } = get();
@@ -117,6 +181,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearMessages: () => set((state) => ({
     messages: [state.messages[0]], // Keep the system prompt
     currentSessionId: null,
+    currentMode: 'general_support', // Reset to default mode
   })),
 
   setLoading: (loading) => set({ isLoading: loading }),
@@ -139,6 +204,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           timestamp: new Date(msg.created_at),
         })),
         currentSessionId: sessionId,
+        currentMode: 'general_support', // Reset to default when loading session
       });
     } catch (error) {
       console.error('Error loading session:', error);
@@ -165,6 +231,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       set({
         currentSessionId: session.id,
+        currentMode: 'general_support', // Reset to default mode
         messages: [
           {
             id: generateId(),
@@ -180,5 +247,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
       console.error('Error creating session:', error);
       throw error;
     }
+  },
+
+  switchMode: async (mode: AssistantMode) => {
+    const currentMode = get().currentMode;
+    
+    if (currentMode === mode) return; // No change needed
+    
+    set({ currentMode: mode });
+    
+    // Add system message about mode switch
+    const modeInfo = ASSISTANT_MODES[mode];
+    const systemMessage: Message = {
+      id: generateId(),
+      role: 'system',
+      content: `Switched to ${modeInfo.title}.`,
+      timestamp: new Date(),
+    };
+    
+    await get().addMessage(systemMessage);
   },
 }));
