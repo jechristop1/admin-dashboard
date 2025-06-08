@@ -8,10 +8,26 @@ interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
+// Mode to icon mapping
+const MODE_ICONS = {
+  general_support: '💬',
+  claims_mode: '📋',
+  transition_mode: '🧭',
+  document_mode: '📄',
+  mental_health_mode: '🧠',
+  education_mode: '🎓',
+  career_mode: '🧑‍💼',
+  finance_mode: '💰',
+  housing_mode: '🏠',
+  survivor_mode: '🕊️',
+  training_mode: '🛠️',
+} as const;
+
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { currentMode } = useChatStore();
   const currentModeInfo = ASSISTANT_MODES[currentMode];
+  const currentIcon = MODE_ICONS[currentMode];
   
   return (
     <header className="bg-[#0A2463] text-white shadow-md">
@@ -23,12 +39,12 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
         
-        {/* Center - Assistant Mode Display */}
-        <div className="flex items-center gap-3">
-          <div className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5">
-            <span className="text-sm font-semibold text-white">Assistant Mode</span>
+        {/* Center - Assistant Mode Pill Badge */}
+        <div className="flex items-center justify-center">
+          <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-full px-4 py-1 text-sm font-medium">
+            <span className="text-lg">{currentIcon}</span>
+            <span className="text-gray-800">{currentModeInfo.title}</span>
           </div>
-          <span className="text-white font-medium">{currentModeInfo.title}</span>
         </div>
         
         <div className="flex items-center gap-4">
