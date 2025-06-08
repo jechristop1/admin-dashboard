@@ -393,7 +393,6 @@ When answering questions:
             <div className="w-12 h-12 bg-gradient-to-br from-[#0A2463] to-[#061A47] rounded-xl flex items-center justify-center shadow-lg">
               <Bot size={24} className="text-[#FFBA08]" />
             </div>
-            <br></br>
             <div className="text-left ml-3">
               <h1 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-[#0A2463] to-[#061A47] bg-clip-text text-transparent">
                 ForwardOps AI
